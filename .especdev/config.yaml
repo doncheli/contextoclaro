@@ -1,0 +1,22 @@
+proyecto:
+  nombre: "Contexto Claro"
+  tipo: app
+  descripcion: "Plataforma de verificación de noticias para LATAM (Venezuela y Colombia) con análisis de sesgo, validación IA y detección de contenido patrocinado"
+  repositorio: local
+  idioma_codigo: en
+  idioma_docs: es
+
+framework:
+  idioma: es
+  version: "1.0"
+
+stack:
+  frontend: React 19 + Vite 7 + Tailwind CSS 4
+  backend: Supabase (PostgreSQL + Edge Functions)
+  ia: Google Gemini 3.1 Flash Lite
+  mobile: Capacitor (Android)
+  deploy: Supabase Hosting
+
+equipo:
+  - nombre: jloronoz
+    rol: fullstack

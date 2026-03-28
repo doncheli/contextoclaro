@@ -821,15 +821,7 @@ function Footer() {
 
           {/* Logo + info */}
           <div className="flex flex-col items-start lg:items-end gap-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-accent flex items-center justify-center">
-                <Compass size={20} className="text-white" />
-              </div>
-              <div>
-                <span className="text-base font-bold font-heading">Contexto <span className="text-accent">Claro</span></span>
-                <p className="text-[10px] text-text-muted">Noticias con perspectiva</p>
-              </div>
-            </div>
+            <img src="/logo.png" alt="Contexto Claro" className="h-10 w-auto" />
             <p className="text-xs text-text-muted max-w-xs text-left lg:text-right leading-relaxed">
               Analizamos la cobertura mediática de Latinoamérica para que puedas
               informarte con contexto y sin sesgo.

@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
 
 // Google AdSense Publisher ID — replace with your real ID
-const ADSENSE_PUB_ID = 'ca-pub-XXXXXXXXXX'
+const ADSENSE_PUB_ID = 'ca-pub-8704878719669732'
 
-// Set to true once you have a real AdSense account
-const ADS_ENABLED = false
+// AdSense account connected
+const ADS_ENABLED = true
 
 /**
  * AdBanner — Non-invasive ad placements for Contexto Claro
@@ -31,6 +31,8 @@ export default function AdBanner({ variant = 'section-break', className = '' }) 
     }
   }, [])
 
+  // Ad unit slots — reemplazar con tus slot IDs reales cuando los crees en AdSense
+  // Por ahora usa auto-ads con format="auto" y responsive="true"
   const configs = {
     'feed-inline': {
       format: 'fluid',
@@ -40,14 +42,14 @@ export default function AdBanner({ variant = 'section-break', className = '' }) 
       wrapper: 'my-4 mx-auto max-w-[600px]',
     },
     'sidebar': {
-      format: 'auto',
-      style: { display: 'block', width: '300px', height: '250px' },
+      format: 'rectangle',
+      style: { display: 'inline-block', width: '300px', height: '250px' },
       slot: '1234567891',
       wrapper: 'my-4',
     },
     'section-break': {
-      format: 'auto',
-      style: { display: 'block', textAlign: 'center' },
+      format: 'horizontal',
+      style: { display: 'block', textAlign: 'center', height: '90px' },
       slot: '1234567892',
       wrapper: 'my-8 mx-auto max-w-3xl',
     },

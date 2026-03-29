@@ -12,6 +12,7 @@ import {
   trackCountryFilter, trackSearch, trackSectionView,
   trackFakeNewsAlertView, trackSponsoredAlertView, trackAdImpression
 } from './lib/analytics'
+import { getFallbackImage } from './lib/categoryImages'
 
 const COUNTRIES = [
   { code: 'ALL', name: 'Todos los países', emoji: '🌎' },
@@ -115,8 +116,20 @@ function SectionHeader({ title, subtitle, icon: Icon, onSeeMore }) {
   )
 }
 
-function NewsImage({ src, alt, className = "" }) {
+function NewsImage({ src, alt, className = "", news }) {
   const [failed, setFailed] = useState(false)
+  const fallback = news ? getFallbackImage(news) : null
+
+  if ((!src || failed) && fallback) {
+    return (
+      <img
+        src={fallback}
+        alt={alt}
+        className={className}
+        loading="lazy"
+      />
+    )
+  }
 
   if (!src || failed) {
     return (
@@ -368,7 +381,7 @@ function HeroSection({ news: heroNews, onSelectNews }) {
                     key={slide.id}
                     className={`absolute inset-0 transition-opacity duration-700 ${i === active ? 'opacity-100' : 'opacity-0'}`}
                   >
-                    <NewsImage src={slide.image} alt={slide.title} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" />
+                    <NewsImage src={slide.image} alt={slide.title} news={slide} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" />
                   </div>
                 ))}
               </div>
@@ -468,7 +481,7 @@ function NewsCard({ news, onSelectNews, variant = "default" }) {
       >
         <FakeBanner news={news} />
         <div className="relative h-44 overflow-hidden">
-          <NewsImage src={news.image} alt={news.title} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" />
+          <NewsImage src={news.image} alt={news.title} news={news} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" />
           <div className="absolute inset-0 img-overlay" />
           <div className="absolute top-3 right-3">
             <ScoreBadge score={score} size="sm" />
@@ -509,7 +522,7 @@ function NewsCard({ news, onSelectNews, variant = "default" }) {
       >
         <FakeBanner news={news} />
         <div className="relative h-36 overflow-hidden">
-          <NewsImage src={news.image} alt={news.title} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" />
+          <NewsImage src={news.image} alt={news.title} news={news} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" />
           <div className="absolute top-2 right-2">
             <ScoreBadge score={score} size="sm" />
           </div>
@@ -610,7 +623,7 @@ function FlaggedNewsCard({ news, onSelectNews }) {
       <div className="flex gap-3 p-4">
         {/* Thumbnail */}
         <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0">
-          <NewsImage src={news.image} alt={news.title} className="w-full h-full object-cover" />
+          <NewsImage src={news.image} alt={news.title} news={news} className="w-full h-full object-cover" />
         </div>
 
         <div className="flex-1 min-w-0">
@@ -655,7 +668,7 @@ function SponsoredNewsCard({ news, onSelectNews }) {
       <div className="relative h-40 overflow-hidden">
         {news.image ? (
           <>
-            <NewsImage src={news.image} alt={news.title} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" />
+            <NewsImage src={news.image} alt={news.title} news={news} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#1a2540] via-transparent to-transparent" />
           </>
         ) : (
@@ -944,7 +957,7 @@ export default function App() {
 
       <main id="main-content" role="main" aria-label="Contenido principal" className="max-w-7xl mx-auto pb-8">
         {/* Hero Carousel */}
-        <HeroSection news={[hero, ...daily.slice(0, 2)].filter(Boolean)} onSelectNews={selectNews} />
+        <HeroSection news={hero} onSelectNews={selectNews} />
 
         {/* Stats Bar */}
         <StatsBar daily={daily} feed={feed} blindspot={blindspot} />

@@ -10,9 +10,15 @@ import {
   trackArticleView, trackArticleTimeSpent, trackVerificationView,
   trackSourcesClick, trackReturnToFeed, observeScrollDepth, resetScrollTracking
 } from './lib/analytics'
+import { getFallbackImage } from './lib/categoryImages'
 
-function NewsImage({ src, alt, className = "" }) {
+function NewsImage({ src, alt, className = "", news }) {
   const [failed, setFailed] = useState(false)
+  const fallback = news ? getFallbackImage(news) : null
+
+  if ((!src || failed) && fallback) {
+    return <img src={fallback} alt={alt} className={className} loading="lazy" />
+  }
 
   if (!src || failed) {
     return (
@@ -445,7 +451,7 @@ export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) 
           <div className="flex-1 min-w-0 slide-up">
             {/* Hero image with overlaid title */}
             <div className="relative rounded-2xl overflow-hidden mb-8">
-              <NewsImage src={news.image} alt={`Imagen de la noticia: ${news.title}`} className="w-full h-[300px] sm:h-[400px] object-cover" />
+              <NewsImage src={news.image} alt={`Imagen de la noticia: ${news.title}`} className="w-full h-[300px] sm:h-[400px] object-cover" news={news} />
               <div className="absolute inset-0 img-overlay" />
 
               {/* Category + flag overlay */}

@@ -75,22 +75,23 @@ function applyCountryFilter(query, countryCode) {
 }
 
 /**
- * Obtiene la noticia hero (principal).
+ * Obtiene las noticias hero (las 3 más recientes con imagen).
  */
 export async function fetchHeroNews(countryCode) {
   let query = supabase
     .from('news')
     .select('*, news_sources(*)')
-    .eq('news_type', 'hero')
+    .not('image', 'is', null)
+    .not('image', 'like', '%googleusercontent%')
     .order('published_at', { ascending: false })
-    .limit(1)
+    .limit(3)
 
   query = applyCountryFilter(query, countryCode)
 
-  const { data, error } = await query.maybeSingle()
+  const { data, error } = await query
 
   if (error) throw error
-  return data ? mapNewsRow(data) : null
+  return (data || []).map(mapNewsRow)
 }
 
 /**

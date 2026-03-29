@@ -43,12 +43,11 @@ export function useNewsSections(countryCode = 'ALL') {
 
       if (!mountedRef.current) return
 
-      const effectiveHero = hero || (daily.length > 0 ? daily[0] : feed.length > 0 ? feed[0] : null)
-      const remainingDaily = hero ? daily : daily.slice(1)
+      const heroSlides = hero.length > 0 ? hero : daily.slice(0, 3).concat(feed.slice(0, 3)).slice(0, 3)
 
       setSections({
-        hero: effectiveHero,
-        daily: remainingDaily.length > 0 ? remainingDaily : daily,
+        hero: heroSlides,
+        daily,
         blindspot,
         feed,
         flagged,

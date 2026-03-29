@@ -82,7 +82,18 @@ export function useNewsSections(countryCode = 'ALL') {
     mountedRef.current = true
     setLoading(true)
     loadData()
-    return () => { mountedRef.current = false }
+
+    // Refresh stats every 5 minutes
+    const interval = setInterval(async () => {
+      try {
+        const freshStats = await fetchSiteStats(countryCode)
+        if (mountedRef.current && freshStats) {
+          setSections(prev => ({ ...prev, stats: freshStats }))
+        }
+      } catch { /* silent */ }
+    }, 5 * 60 * 1000)
+
+    return () => { mountedRef.current = false; clearInterval(interval) }
   }, [loadData])
 
   return { ...sections, loading, error }

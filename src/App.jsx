@@ -337,7 +337,7 @@ function CountryDropdown({ value, onChange }) {
   )
 }
 
-function Header({ onLogoClick, countryCode, onCountryChange, onSelectNews, onSearch }) {
+function Header({ onLogoClick, countryCode, onCountryChange, onSelectNews, onSearch, onAboutClick }) {
   const { query, setQuery, results, searching } = useNewsSearch()
   const [searchFocused, setSearchFocused] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -360,6 +360,7 @@ function Header({ onLogoClick, countryCode, onCountryChange, onSelectNews, onSea
     { label: 'Política', icon: BarChart3 },
     { label: 'Economía', icon: TrendingUp },
     { label: 'Verificador', icon: ShieldCheck },
+    { label: 'Acerca de', icon: Compass, onClick: onAboutClick },
   ]
 
   return (
@@ -374,7 +375,7 @@ function Header({ onLogoClick, countryCode, onCountryChange, onSelectNews, onSea
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-1" aria-label="Navegación principal">
             {navItems.map(item => (
-              <button key={item.label} className="flex items-center gap-1.5 px-3 py-2 text-sm text-text-secondary hover:text-accent transition-colors rounded-lg hover:bg-accent-muted">
+              <button key={item.label} onClick={item.onClick} className="flex items-center gap-1.5 px-3 py-2 text-sm text-text-secondary hover:text-accent transition-colors rounded-lg hover:bg-accent-muted">
                 <item.icon size={14} />
                 {item.label}
               </button>
@@ -454,7 +455,7 @@ function Header({ onLogoClick, countryCode, onCountryChange, onSelectNews, onSea
             </div>
             <div className="grid grid-cols-2 gap-1">
               {navItems.map(item => (
-                <button key={item.label} className="flex items-center gap-2 px-3 py-2.5 text-sm text-text-secondary hover:text-accent hover:bg-accent-muted rounded-lg transition-colors">
+                <button key={item.label} onClick={() => { if (item.onClick) item.onClick(); setMobileMenuOpen(false) }} className="flex items-center gap-2 px-3 py-2.5 text-sm text-text-secondary hover:text-accent hover:bg-accent-muted rounded-lg transition-colors">
                   <item.icon size={16} />
                   {item.label}
                 </button>
@@ -968,9 +969,9 @@ function StatsBar({ stats }) {
 
 const SOCIAL_LINKS = [
   { label: 'YouTube', abbr: 'YT', href: 'https://youtube.com/@doncheli' },
-  { label: 'X', abbr: 'X', href: 'https://x.com/doncheli' },
-  { label: 'Instagram', abbr: 'IG', href: 'https://instagram.com/doncheli' },
-  { label: 'TikTok', abbr: 'TT', href: 'https://tiktok.com/@doncheli' },
+  { label: 'X', abbr: 'X', href: 'https://x.com/don_cheli' },
+  { label: 'Instagram', abbr: 'IG', href: 'https://instagram.com/doncheli.tv' },
+  { label: 'TikTok', abbr: 'TT', href: 'https://tiktok.com/@doncheli.tv' },
   { label: 'GitHub', abbr: 'GH', href: 'https://github.com/doncheli/contextoclaro' },
 ]
 
@@ -1371,6 +1372,7 @@ export default function App() {
     onCountryChange: handleCountryChange,
     onSelectNews: selectNews,
     onSearch: handleSearch,
+    onAboutClick: openAbout,
   }
 
   useEffect(() => {

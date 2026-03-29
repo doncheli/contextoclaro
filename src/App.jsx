@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import ArticleView from './NewsDetailModal'
 import { useNewsSections, useNewsSearch } from './hooks/useNews'
+import { searchNews } from './lib/newsService'
 import AdBanner from './components/AdBanner'
 import {
   trackCountryFilter, trackSearch, trackSectionView,
@@ -187,9 +188,9 @@ function BiasBar({ left, center, right }) {
         <span>Centro</span>
         <span>Derecha</span>
       </div>
-      <div className="flex h-2.5 rounded-full overflow-hidden bg-base/50">
+      <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-200">
         <div className="bg-bias-left bar-animate" style={{ width: `${left}%` }} />
-        <div className="bg-bias-center bar-animate" style={{ width: `${center}%` }} />
+        <div className="bg-bias-center bar-animate border-y border-gray-300" style={{ width: `${center}%` }} />
         <div className="bg-bias-right bar-animate" style={{ width: `${right}%` }} />
       </div>
       <div className="flex justify-between text-[11px] font-bold mt-1">
@@ -336,10 +337,23 @@ function CountryDropdown({ value, onChange }) {
   )
 }
 
-function Header({ onLogoClick, countryCode, onCountryChange }) {
+function Header({ onLogoClick, countryCode, onCountryChange, onSelectNews, onSearch }) {
   const { query, setQuery, results, searching } = useNewsSearch()
   const [searchFocused, setSearchFocused] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const handleSearchSubmit = () => {
+    if (query.trim().length >= 2 && onSearch) {
+      onSearch(query.trim())
+      setSearchFocused(false)
+    }
+  }
+
+  const handleResultClick = (id) => {
+    if (onSelectNews) onSelectNews(id)
+    setQuery('')
+    setSearchFocused(false)
+  }
 
   const navItems = [
     { label: 'Blindspot', icon: Eye },
@@ -380,6 +394,7 @@ function Header({ onLogoClick, countryCode, onCountryChange }) {
                 aria-label="Buscar noticias"
                 value={query}
                 onChange={e => { setQuery(e.target.value); if (e.target.value.length >= 3) trackSearch(e.target.value, results?.length || 0) }}
+                onKeyDown={e => { if (e.key === 'Enter') handleSearchSubmit() }}
                 className="w-full pl-9 pr-3 py-2 text-sm rounded-xl bg-surface border border-border text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
@@ -389,35 +404,26 @@ function Header({ onLogoClick, countryCode, onCountryChange }) {
                   {searching ? (
                     <div className="p-4 text-center text-xs text-text-muted pulse-soft">Buscando...</div>
                   ) : results.length > 0 ? (
-                    results.map(item => (
-                      <div key={item.id} className="p-3 hover:bg-accent-muted cursor-pointer border-b border-border last:border-0 transition-colors">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs">{item.country}</span>
-                          <span className="text-[10px] text-text-muted bg-surface px-1.5 py-0.5 rounded">{item.category}</span>
+                    <>
+                      {results.map(item => (
+                        <div key={item.id} onMouseDown={() => handleResultClick(item.id)} className="p-3 hover:bg-accent-muted cursor-pointer border-b border-border last:border-0 transition-colors">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs">{item.country}</span>
+                            <span className="text-[10px] text-text-muted bg-surface px-1.5 py-0.5 rounded">{item.category}</span>
+                          </div>
+                          <p className="text-sm font-medium leading-snug">{item.title}</p>
                         </div>
-                        <p className="text-sm font-medium leading-snug">{item.title}</p>
+                      ))}
+                      <div onMouseDown={handleSearchSubmit} className="p-3 text-center text-xs text-accent font-semibold hover:bg-accent-muted cursor-pointer transition-colors">
+                        Ver todos los resultados para &quot;{query}&quot;
                       </div>
-                    ))
+                    </>
                   ) : (
                     <div className="p-4 text-center text-xs text-text-muted">Sin resultados para &quot;{query}&quot;</div>
                   )}
                 </div>
               )}
             </div>
-
-            {/* Theme toggle */}
-            <button
-              onClick={() => {
-                const current = document.documentElement.getAttribute('data-theme')
-                const next = current === 'light' ? 'dark' : 'light'
-                document.documentElement.setAttribute('data-theme', next)
-                localStorage.setItem('theme', next)
-              }}
-              aria-label="Cambiar tema"
-              className="w-9 h-9 rounded-xl bg-surface/50 border border-border flex items-center justify-center text-text-secondary hover:text-accent transition-colors"
-            >
-              <span className="text-sm">🌗</span>
-            </button>
 
             {/* Mobile menu toggle */}
             <button
@@ -442,6 +448,7 @@ function Header({ onLogoClick, countryCode, onCountryChange }) {
                 placeholder="Buscar noticias..."
                 value={query}
                 onChange={e => setQuery(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { handleSearchSubmit(); setMobileMenuOpen(false) } }}
                 className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-surface border border-border text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50 transition-all"
               />
             </div>
@@ -1037,6 +1044,58 @@ function Footer() {
   )
 }
 
+/* ═══════════════ SEARCH RESULTS VIEW ═══════════════ */
+
+function SearchResultsView({ query, onClose, onSelectNews, headerProps }) {
+  const [results, setResults] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setLoading(true)
+    searchNews(query, 100).then(data => {
+      const sorted = [...data].sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0))
+      setResults(sorted)
+    }).catch(() => setResults([])).finally(() => setLoading(false))
+  }, [query])
+
+  return (
+    <div className="gradient-bg" lang="es">
+      <Header onLogoClick={onClose} {...headerProps} />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center gap-3 mb-6">
+          <button onClick={onClose} className="text-text-secondary hover:text-accent transition-colors">
+            <ChevronRight size={20} className="rotate-180" />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold font-heading">Resultados para &ldquo;{query}&rdquo;</h1>
+            <p className="text-xs text-text-muted">
+              {loading ? 'Buscando...' : `${results.length} noticias encontradas · Más recientes primero`}
+            </p>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <span className="text-sm text-text-muted pulse-soft">Buscando noticias...</span>
+          </div>
+        ) : results.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {results.map(news => (
+              <NewsCard key={news.id} news={news} onSelectNews={onSelectNews} variant="compact" />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20">
+            <Search size={32} className="text-text-muted/40 mx-auto mb-3" />
+            <p className="text-sm text-text-secondary">No se encontraron noticias para &ldquo;{query}&rdquo;</p>
+          </div>
+        )}
+      </main>
+      <Footer />
+    </div>
+  )
+}
+
 /* ═══════════════ MAIN APP ═══════════════ */
 
 export default function App() {
@@ -1049,6 +1108,7 @@ export default function App() {
   const [showAllNews, setShowAllNews] = useState(false)
   const [visibleCount, setVisibleCount] = useState(24)
   const [categoryFilter, setCategoryFilter] = useState('ALL')
+  const [searchQuery, setSearchQuery] = useState(null)
   const handleCountryChange = (code) => { trackCountryFilter(code); setCountryCode(code) }
   const { hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, loading, error } = useNewsSections(countryCode)
 
@@ -1085,6 +1145,20 @@ export default function App() {
     })
   }, [])
 
+  const handleSearch = useCallback((q) => {
+    setSearchQuery(q)
+    setSelectedNewsId(null)
+    setShowAllNews(false)
+    window.scrollTo({ top: 0 })
+  }, [])
+
+  const headerProps = {
+    countryCode,
+    onCountryChange: handleCountryChange,
+    onSelectNews: selectNews,
+    onSearch: handleSearch,
+  }
+
   useEffect(() => {
     const handlePopState = (event) => {
       if (event.state?.articleId) {
@@ -1110,7 +1184,7 @@ export default function App() {
   if (selectedNewsId) {
     return (
       <div className="gradient-bg">
-        <Header onLogoClick={closeArticle} countryCode={countryCode} onCountryChange={handleCountryChange} />
+        <Header onLogoClick={closeArticle} {...headerProps} />
         <ArticleView
           newsId={selectedNewsId}
           allNews={allNews}
@@ -1122,13 +1196,17 @@ export default function App() {
     )
   }
 
+  if (searchQuery) {
+    return <SearchResultsView query={searchQuery} onClose={() => setSearchQuery(null)} onSelectNews={selectNews} headerProps={headerProps} />
+  }
+
   if (showAllNews) {
     const sorted = [...allNews].sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0))
     const filtered = categoryFilter === 'ALL' ? sorted : sorted.filter(n => (n.category || '').toUpperCase().includes(categoryFilter))
     const visible = filtered.slice(0, visibleCount)
     return (
       <div className="gradient-bg" lang="es">
-        <Header onLogoClick={() => { setShowAllNews(false); setVisibleCount(24) }} countryCode={countryCode} onCountryChange={handleCountryChange} />
+        <Header onLogoClick={() => { setShowAllNews(false); setVisibleCount(24) }} {...headerProps} />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -1181,7 +1259,7 @@ export default function App() {
   return (
     <div className="gradient-bg" lang="es">
       <a href="#main-content" className="skip-link">Saltar al contenido principal</a>
-      <Header onLogoClick={closeArticle} countryCode={countryCode} onCountryChange={handleCountryChange} />
+      <Header onLogoClick={() => { setSearchQuery(null); closeArticle() }} {...headerProps} />
       <BreakingNewsBanner flagged={flagged} onSelectNews={selectNews} />
 
       <main id="main-content" role="main" aria-label="Contenido principal" className="max-w-7xl mx-auto pb-8">

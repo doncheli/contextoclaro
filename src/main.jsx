@@ -3,9 +3,8 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 
-// Initialize theme from localStorage (default: light)
-const saved = localStorage.getItem('theme')
-document.documentElement.setAttribute('data-theme', saved || 'light')
+// Force light theme
+document.documentElement.setAttribute('data-theme', 'light')
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

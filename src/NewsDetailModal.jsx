@@ -146,7 +146,7 @@ function ScoreDetailBar({ label, value, color }) {
         </div>
         <span className={`text-xs font-bold ${color}`}>{value}%</span>
       </div>
-      <div className="h-2 rounded-full bg-base/80 overflow-hidden">
+      <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
         <div className={`h-full rounded-full ${bgColor} bar-animate transition-all`} style={{ width: `${value}%` }} />
       </div>
     </div>
@@ -176,7 +176,7 @@ function VerificadorSidebar({ overall, sc, r, circ, offset, bias, sourceCount, o
         <div className="flex flex-col items-center mb-6 py-3 mx-auto">
           <div className="relative flex items-center justify-center">
             <svg width={140} height={140} className="transform -rotate-90" aria-hidden="true">
-              <circle cx={70} cy={70} r={56} fill="none" className="stroke-border" strokeWidth="10" />
+              <circle cx={70} cy={70} r={56} fill="none" className="stroke-gray-200" strokeWidth="10" />
               <circle cx={70} cy={70} r={56} fill="none"
                 strokeWidth="10" strokeLinecap="round" strokeDasharray={2 * Math.PI * 56} strokeDashoffset={2 * Math.PI * 56 - (overall / 100) * 2 * Math.PI * 56}
                 className={`stroke-current ${sc.text} ring-animate`}
@@ -217,15 +217,15 @@ function VerificadorSidebar({ overall, sc, r, circ, offset, bias, sourceCount, o
                 <Info size={12} className="text-text-muted/50 hover:text-accent cursor-help transition-colors" aria-hidden="true" />
               </Tooltip>
             </div>
-            <div className="flex h-3 rounded-full overflow-hidden bg-base/60 mb-3 shadow-inner">
+            <div className="flex h-3 rounded-full overflow-hidden bg-gray-200 mb-3 shadow-inner">
               <div className="bg-bias-left bar-animate" style={{ width: `${bias.left}%` }} />
-              <div className="bg-bias-center bar-animate" style={{ width: `${bias.center}%` }} />
+              <div className="bg-bias-center bar-animate border-y border-gray-300" style={{ width: `${bias.center}%` }} />
               <div className="bg-bias-right bar-animate" style={{ width: `${bias.right}%` }} />
             </div>
             <div className="flex justify-between text-[11px] font-semibold">
-              <span className="text-bias-left">Izquierda<br /><span className="text-sm font-bold">{bias.left}%</span></span>
-              <span className="text-bias-center text-center">Centro<br /><span className="text-sm font-bold">{bias.center}%</span></span>
-              <span className="text-bias-right text-right">Derecha<br /><span className="text-sm font-bold">{bias.right}%</span></span>
+              <span className="text-red-600">Izquierda<br /><span className="text-sm font-bold">{bias.left}%</span></span>
+              <span className="text-gray-500 text-center">Centro<br /><span className="text-sm font-bold">{bias.center}%</span></span>
+              <span className="text-[#1e3a5f] text-right">Derecha<br /><span className="text-sm font-bold">{bias.right}%</span></span>
             </div>
           </div>
         )}
@@ -295,7 +295,7 @@ function RegionalContextCard({ news, onClick }) {
         </h4>
 
         {/* Bias bar */}
-        <div className="h-1.5 rounded-full overflow-hidden bg-base mb-3">
+        <div className="h-1.5 rounded-full overflow-hidden bg-gray-200 mb-3">
           <div className={`h-full rounded-full ${biasBarColor}`} style={{ width: `${biasScore}%` }} />
         </div>
 
@@ -374,7 +374,7 @@ function SourcesPanel({ sources, isOpen, onClose }) {
                 <p className="text-xs text-text-secondary mb-2">{src.stance}</p>
                 {src.credibility && (
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 rounded-full bg-base overflow-hidden">
+                    <div className="flex-1 h-1.5 rounded-full bg-gray-200 overflow-hidden">
                       <div className={`h-full rounded-full ${srcSc.bg}`} style={{ width: `${src.credibility}%` }} />
                     </div>
                     <span className={`text-[10px] font-bold ${srcSc.text}`}>{src.credibility}/100</span>

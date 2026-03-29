@@ -383,10 +383,10 @@ h1, h2, h3, h4, h5, h6 {
   --color-danger: #b91c1c;
   --color-danger-muted: rgba(185, 28, 28, 0.08);
 
-  /* Bias — high contrast versions */
-  --color-bias-left: #b91c1c;
-  --color-bias-center: #374151;
-  --color-bias-right: #1d4ed8;
+  /* Bias — rojo / blanco / azul oscuro */
+  --color-bias-left: #dc2626;
+  --color-bias-center: #d1d5db;
+  --color-bias-right: #1e3a5f;
 
   /* Text — dark slate for maximum readability */
   --color-text-primary: #111827;

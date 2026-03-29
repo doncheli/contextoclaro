@@ -183,20 +183,20 @@ function GeminiBadge({ verdict, confidence }) {
 function BiasBar({ left, center, right }) {
   return (
     <div className="w-full">
-      <div className="flex justify-between text-[11px] font-medium text-text-secondary mb-1.5">
-        <span>Izquierda</span>
-        <span>Centro</span>
-        <span>Derecha</span>
+      <div className="flex justify-between text-[11px] font-medium mb-1.5">
+        <span className="text-red-600">Izquierda</span>
+        <span className="text-gray-500">Centro</span>
+        <span className="text-[#1e3a5f]">Derecha</span>
       </div>
-      <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-200">
-        <div className="bg-bias-left bar-animate" style={{ width: `${left}%` }} />
-        <div className="bg-bias-center bar-animate border-y border-gray-300" style={{ width: `${center}%` }} />
-        <div className="bg-bias-right bar-animate" style={{ width: `${right}%` }} />
+      <div className="flex h-3 rounded-full overflow-hidden bg-gray-300 border border-gray-300">
+        <div className="bg-red-600 bar-animate" style={{ width: `${left}%` }} />
+        <div className="bg-white bar-animate" style={{ width: `${center}%` }} />
+        <div className="bg-[#1e3a5f] bar-animate" style={{ width: `${right}%` }} />
       </div>
       <div className="flex justify-between text-[11px] font-bold mt-1">
-        <span className="text-bias-left">{left}%</span>
-        <span className="text-bias-center">{center}%</span>
-        <span className="text-bias-right">{right}%</span>
+        <span className="text-red-600">{left}%</span>
+        <span className="text-gray-500">{center}%</span>
+        <span className="text-[#1e3a5f]">{right}%</span>
       </div>
     </div>
   )
@@ -938,9 +938,9 @@ function StatsBar({ stats }) {
     { label: 'Engañosas', value: stats.misleading, icon: ShieldAlert, color: 'text-warning', bg: 'bg-warning/10' },
     { label: 'Falsas detectadas', value: stats.fake, icon: ShieldX, color: 'text-danger', bg: 'bg-danger/10' },
     { label: 'Patrocinadas', value: stats.sponsored, icon: DollarSign, color: 'text-warning', bg: 'bg-warning/10' },
-    { label: 'Sesgo Izquierda', value: stats.biasLeft, icon: null, color: 'text-bias-left', bg: 'bg-bias-left/10', emoji: '◀' },
-    { label: 'Sesgo Centro', value: stats.biasCenter, icon: null, color: 'text-bias-center', bg: 'bg-bias-center/10', emoji: '◆' },
-    { label: 'Sesgo Derecha', value: stats.biasRight, icon: null, color: 'text-bias-right', bg: 'bg-bias-right/10', emoji: '▶' },
+    { label: 'Sesgo Izquierda', value: stats.biasLeft, icon: null, color: 'text-red-600', bg: 'bg-red-50', emoji: '◀' },
+    { label: 'Sesgo Centro', value: stats.biasCenter, icon: null, color: 'text-gray-600', bg: 'bg-gray-100', emoji: '◆' },
+    { label: 'Sesgo Derecha', value: stats.biasRight, icon: null, color: 'text-[#1e3a5f]', bg: 'bg-blue-50', emoji: '▶' },
   ]
 
   return (

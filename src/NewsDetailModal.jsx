@@ -217,10 +217,10 @@ function VerificadorSidebar({ overall, sc, r, circ, offset, bias, sourceCount, o
                 <Info size={12} className="text-text-muted/50 hover:text-accent cursor-help transition-colors" aria-hidden="true" />
               </Tooltip>
             </div>
-            <div className="flex h-3 rounded-full overflow-hidden bg-gray-200 mb-3 shadow-inner">
-              <div className="bg-bias-left bar-animate" style={{ width: `${bias.left}%` }} />
-              <div className="bg-bias-center bar-animate border-y border-gray-300" style={{ width: `${bias.center}%` }} />
-              <div className="bg-bias-right bar-animate" style={{ width: `${bias.right}%` }} />
+            <div className="flex h-4 rounded-full overflow-hidden bg-gray-300 mb-3 shadow-inner border border-gray-300">
+              <div className="bg-red-600 bar-animate" style={{ width: `${bias.left}%` }} />
+              <div className="bg-white bar-animate" style={{ width: `${bias.center}%` }} />
+              <div className="bg-[#1e3a5f] bar-animate" style={{ width: `${bias.right}%` }} />
             </div>
             <div className="flex justify-between text-[11px] font-semibold">
               <span className="text-red-600">Izquierda<br /><span className="text-sm font-bold">{bias.left}%</span></span>
@@ -340,11 +340,11 @@ function SourcesPanel({ sources, isOpen, onClose }) {
   if (!isOpen || !sources?.length) return null
 
   const biasColors = {
-    "izquierda": "text-bias-left border-bias-left/30 bg-bias-left/10",
-    "centro-izquierda": "text-bias-left border-bias-left/20 bg-bias-left/5",
-    "centro": "text-bias-center border-bias-center/30 bg-bias-center/10",
-    "centro-derecha": "text-bias-right border-bias-right/20 bg-bias-right/5",
-    "derecha": "text-bias-right border-bias-right/30 bg-bias-right/10"
+    "izquierda": "text-red-600 border-red-300 bg-red-50",
+    "centro-izquierda": "text-red-500 border-red-200 bg-red-50/50",
+    "centro": "text-gray-600 border-gray-300 bg-gray-100",
+    "centro-derecha": "text-[#1e3a5f] border-blue-200 bg-blue-50/50",
+    "derecha": "text-[#1e3a5f] border-blue-300 bg-blue-50"
   }
 
   return (

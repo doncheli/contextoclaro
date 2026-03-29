@@ -1639,8 +1639,8 @@ export default function App() {
   const [visibleCount, setVisibleCount] = useState(24)
   const [categoryFilter, setCategoryFilter] = useState('ALL')
   const [searchQuery, setSearchQuery] = useState(null)
-  const [showAbout, setShowAbout] = useState(false)
-  const [showMethodology, setShowMethodology] = useState(false)
+  const [showAbout, setShowAbout] = useState(() => window.location.pathname === '/acerca-de')
+  const [showMethodology, setShowMethodology] = useState(() => window.location.pathname === '/metodologia')
   const handleCountryChange = (code) => { trackCountryFilter(code); setCountryCode(code) }
   const { hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, loading, error } = useNewsSections(countryCode)
 
@@ -1694,6 +1694,7 @@ export default function App() {
     setSelectedNewsId(null)
     setShowAllNews(false)
     setSearchQuery(null)
+    window.history.pushState({ page: 'about' }, '', '/acerca-de')
     window.scrollTo({ top: 0 })
   }, [])
 
@@ -1703,6 +1704,7 @@ export default function App() {
     setSelectedNewsId(null)
     setShowAllNews(false)
     setSearchQuery(null)
+    window.history.pushState({ page: 'methodology' }, '', '/metodologia')
     window.scrollTo({ top: 0 })
   }, [])
 
@@ -1716,8 +1718,17 @@ export default function App() {
 
   useEffect(() => {
     const handlePopState = (event) => {
+      const page = event.state?.page
+      setShowAbout(page === 'about')
+      setShowMethodology(page === 'methodology')
+      setSearchQuery(null)
       if (event.state?.articleId) {
         setSelectedNewsId(event.state.articleId)
+        setShowAllNews(false)
+        window.scrollTo({ top: 0 })
+      } else if (page) {
+        setSelectedNewsId(null)
+        setShowAllNews(false)
         window.scrollTo({ top: 0 })
       } else {
         if (event.state?.fromAllNews) setShowAllNews(true)
@@ -1752,11 +1763,11 @@ export default function App() {
   }
 
   if (showAbout) {
-    return <AboutPage onClose={() => setShowAbout(false)} headerProps={headerProps} />
+    return <AboutPage onClose={() => { setShowAbout(false); window.history.pushState({}, '', '/') }} headerProps={headerProps} />
   }
 
   if (showMethodology) {
-    return <MethodologyPage onClose={() => setShowMethodology(false)} headerProps={headerProps} openAbout={openAbout} />
+    return <MethodologyPage onClose={() => { setShowMethodology(false); window.history.pushState({}, '', '/') }} headerProps={headerProps} openAbout={openAbout} />
   }
 
   if (searchQuery) {

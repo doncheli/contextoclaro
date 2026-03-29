@@ -966,7 +966,15 @@ function StatsBar({ stats }) {
 
 /* ═══════════════ FOOTER ═══════════════ */
 
-function Footer() {
+const SOCIAL_LINKS = [
+  { label: 'YouTube', abbr: 'YT', href: 'https://youtube.com/@doncheli' },
+  { label: 'X', abbr: 'X', href: 'https://x.com/doncheli' },
+  { label: 'Instagram', abbr: 'IG', href: 'https://instagram.com/doncheli' },
+  { label: 'TikTok', abbr: 'TT', href: 'https://tiktok.com/@doncheli' },
+  { label: 'GitHub', abbr: 'GH', href: 'https://github.com/doncheli/contextoclaro' },
+]
+
+function Footer({ onAboutClick }) {
   const columns = [
     { title: 'Explorar', links: [
       { label: 'Política', href: '#' },
@@ -976,13 +984,13 @@ function Footer() {
     ]},
     { title: 'Verificación', links: [
       { label: 'Fake News', href: '#' },
-      { label: 'Patrocinadas', href: '#' },
       { label: 'Metodología', href: '#' },
       { label: 'RSS Feed', href: '/rss.xml' },
     ]},
-    { title: 'Legal', links: [
+    { title: 'Proyecto', links: [
+      { label: 'Acerca de', href: '#', onClick: onAboutClick },
+      { label: 'GitHub', href: 'https://github.com/doncheli/contextoclaro', external: true },
       { label: 'Privacidad', href: '/privacy.html' },
-      { label: 'Términos', href: '#' },
       { label: 'Ads.txt', href: '/ads.txt' },
     ]},
   ]
@@ -992,14 +1000,20 @@ function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col lg:flex-row justify-between gap-10">
           {/* Link columns */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 flex-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 flex-1">
             {columns.map(col => (
               <div key={col.title}>
                 <h4 className="text-sm font-bold mb-4 font-heading">{col.title}</h4>
                 <ul className="space-y-2.5">
                   {col.links.map(link => (
                     <li key={link.label}>
-                      <a href={link.href} className="text-sm hover:text-accent transition-colors">{link.label}</a>
+                      {link.onClick ? (
+                        <button onClick={(e) => { e.preventDefault(); link.onClick() }} className="text-sm hover:text-accent transition-colors">
+                          {link.label}
+                        </button>
+                      ) : (
+                        <a href={link.href} {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})} className="text-sm hover:text-accent transition-colors">{link.label}</a>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -1015,17 +1029,16 @@ function Footer() {
               informarte con contexto y sin sesgo.
             </p>
             <div className="flex items-center gap-2">
-              {[
-                { label: 'X', href: '#' },
-                { label: 'in', href: '#' },
-                { label: 'ig', href: '#' },
-              ].map((social, i) => (
+              {SOCIAL_LINKS.map((social, i) => (
                 <a
                   key={i}
                   href={social.href}
-                  className="w-8 h-8 rounded-lg bg-surface border border-border flex items-center justify-center text-text-muted hover:border-accent/40 hover:text-accent transition-all text-xs font-bold"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={social.label}
+                  className="w-8 h-8 rounded-lg bg-surface border border-border flex items-center justify-center text-text-muted hover:border-accent/40 hover:text-accent transition-all text-[10px] font-bold"
                 >
-                  {social.label}
+                  {social.abbr}
                 </a>
               ))}
             </div>
@@ -1041,6 +1054,197 @@ function Footer() {
         </div>
       </div>
     </footer>
+  )
+}
+
+/* ═══════════════ ABOUT PAGE ═══════════════ */
+
+function AboutPage({ onClose, headerProps }) {
+  return (
+    <div className="gradient-bg" lang="es">
+      <Header onLogoClick={onClose} {...headerProps} />
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+        {/* Hero section */}
+        <div className="text-center mb-16">
+          <img src="/logo.png" alt="Contexto Claro" className="h-16 sm:h-20 w-auto mx-auto mb-8" />
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-heading text-text-primary leading-tight mb-4">
+            La verdad no tiene dueño.<br />
+            <span className="text-accent">El contexto s&iacute;.</span>
+          </h1>
+          <p className="text-lg text-text-secondary max-w-2xl mx-auto leading-relaxed">
+            Contexto Claro es una plataforma de verificaci&oacute;n y an&aacute;lisis de medios
+            que usa inteligencia artificial para que puedas informarte sin sesgos,
+            sin manipulaci&oacute;n y sin agendas ocultas.
+          </p>
+        </div>
+
+        {/* Problem */}
+        <section className="mb-16">
+          <div className="card p-8 sm:p-10 border border-danger/20 bg-gradient-to-br from-danger-muted to-transparent">
+            <h2 className="text-2xl font-bold font-heading mb-4 text-danger">El problema</h2>
+            <div className="space-y-4 text-text-secondary leading-relaxed">
+              <p>
+                En Latinoam&eacute;rica, las noticias falsas no son un error &mdash; son una industria. Cada d&iacute;a,
+                millones de personas consumen informaci&oacute;n dise&ntilde;ada para manipular, polarizar y dividir.
+                Los medios tradicionales responden a intereses pol&iacute;ticos y econ&oacute;micos. Las redes sociales
+                amplifican lo que genera clicks, no lo que es verdad.
+              </p>
+              <p>
+                El resultado: sociedades desinformadas que toman decisiones basadas en mentiras.
+                Elecciones influenciadas. Econom&iacute;as da&ntilde;adas. Democracias debilitadas.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Solution */}
+        <section className="mb-16">
+          <h2 className="text-2xl font-bold font-heading mb-8 text-text-primary">La soluci&oacute;n: Contexto Claro</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {[
+              {
+                icon: '🔍',
+                title: 'Verificaci&oacute;n con IA',
+                desc: 'Cada noticia es analizada autom&aacute;ticamente por inteligencia artificial que eval&uacute;a su veracidad, detecta propaganda y se&ntilde;ales de manipulaci&oacute;n.',
+              },
+              {
+                icon: '⚖️',
+                title: 'An&aacute;lisis de sesgo',
+                desc: 'Mostramos el espectro pol&iacute;tico de cada noticia: izquierda, centro y derecha. T&uacute; decides, con toda la informaci&oacute;n sobre la mesa.',
+              },
+              {
+                icon: '📊',
+                title: 'M&uacute;ltiples fuentes',
+                desc: 'No depend&eacute;s de una sola versi&oacute;n. Agregamos y comparamos c&oacute;mo cubren la misma historia diferentes medios de toda la regi&oacute;n.',
+              },
+              {
+                icon: '🌎',
+                title: 'Hecho para Latinoam&eacute;rica',
+                desc: 'Dise&ntilde;ado espec&iacute;ficamente para nuestra regi&oacute;n: Venezuela, Colombia, M&eacute;xico, Argentina, Chile y m&aacute;s. Nuestro contexto, nuestras noticias.',
+              },
+            ].map((item, i) => (
+              <div key={i} className="card p-6 border border-border hover:border-accent/30 transition-colors">
+                <span className="text-3xl mb-3 block">{item.icon}</span>
+                <h3 className="font-bold font-heading mb-2 text-text-primary" dangerouslySetInnerHTML={{ __html: item.title }} />
+                <p className="text-sm text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: item.desc }} />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* How it works */}
+        <section className="mb-16">
+          <h2 className="text-2xl font-bold font-heading mb-8 text-text-primary">C&oacute;mo funciona</h2>
+          <div className="space-y-6">
+            {[
+              { step: '01', title: 'Recopilamos', desc: 'Nuestro sistema monitorea en tiempo real cientos de medios de comunicaci&oacute;n de toda Latinoam&eacute;rica.' },
+              { step: '02', title: 'Analizamos', desc: 'La IA eval&uacute;a cada noticia: precisi&oacute;n factual, diversidad de fuentes, transparencia e independencia editorial.' },
+              { step: '03', title: 'Verificamos', desc: 'Clasificamos cada noticia como Real, Enga&ntilde;osa o Falsa, con un porcentaje de confianza y razonamiento detallado.' },
+              { step: '04', title: 'Presentamos', desc: 'Te mostramos la noticia con todo su contexto: sesgo pol&iacute;tico, puntuaci&oacute;n de fiabilidad y c&oacute;mo la cubren otros medios.' },
+            ].map((item, i) => (
+              <div key={i} className="flex gap-5 items-start">
+                <div className="w-12 h-12 rounded-xl bg-accent text-white flex items-center justify-center text-lg font-black font-heading shrink-0">
+                  {item.step}
+                </div>
+                <div>
+                  <h3 className="font-bold font-heading text-text-primary mb-1">{item.title}</h3>
+                  <p className="text-sm text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: item.desc }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Open Source */}
+        <section className="mb-16">
+          <div className="card p-8 sm:p-10 border border-accent/20 bg-gradient-to-br from-accent-muted to-transparent">
+            <h2 className="text-2xl font-bold font-heading mb-4 text-accent">C&oacute;digo abierto: democratizar la verdad</h2>
+            <div className="space-y-4 text-text-secondary leading-relaxed">
+              <p>
+                Contexto Claro es <strong className="text-text-primary">100% open source</strong>.
+                El c&oacute;digo est&aacute; en GitHub para que cualquier persona lo pueda auditar, mejorar y replicar.
+                Porque la lucha contra la desinformaci&oacute;n no puede ser un negocio cerrado &mdash;
+                tiene que ser un esfuerzo colectivo.
+              </p>
+              <p>
+                Si sos desarrollador, periodista o simplemente alguien que cree en la verdad,
+                pod&eacute;s contribuir. La informaci&oacute;n verificada es un derecho, no un privilegio.
+              </p>
+              <a
+                href="https://github.com/doncheli/contextoclaro"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-2 px-6 py-3 rounded-xl bg-text-primary text-white text-sm font-bold hover:opacity-90 transition-opacity"
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                Ver en GitHub
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* Origin story + DonCheli */}
+        <section className="mb-16">
+          <div className="flex flex-col lg:flex-row gap-8 items-center">
+            <div className="shrink-0">
+              <img
+                src="/doncheli.png"
+                alt="DonCheli - Creador de Contexto Claro"
+                className="w-48 h-48 sm:w-56 sm:h-56 rounded-2xl object-cover shadow-xl border-4 border-white"
+              />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold font-heading mb-4 text-text-primary">Un proyecto nacido en vivo</h2>
+              <div className="space-y-4 text-text-secondary leading-relaxed">
+                <p>
+                  Contexto Claro naci&oacute; durante un <strong className="text-text-primary">LIVE de @doncheli</strong>,
+                  donde la idea de crear una herramienta que analizara noticias con IA surgi&oacute; de forma
+                  espont&aacute;nea frente a la audiencia. Lo que comenz&oacute; como una conversaci&oacute;n en vivo
+                  se convirti&oacute; en un proyecto real, construido paso a paso con la comunidad.
+                </p>
+                <p>
+                  La misi&oacute;n es simple: <strong className="text-text-primary">que nadie te mienta</strong>.
+                  Que puedas abrir un sitio y saber si lo que est&aacute;s leyendo es real, enga&ntilde;oso o
+                  directamente falso. Sin pagar, sin muros, sin agenda.
+                </p>
+                <p>
+                  Si cre&eacute;s en este proyecto, la mejor forma de apoyar es compartirlo y seguir
+                  a @doncheli en redes para estar al d&iacute;a con las actualizaciones.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Social CTA */}
+        <section className="mb-8">
+          <div className="card p-8 sm:p-10 text-center border border-border">
+            <h2 className="text-2xl font-bold font-heading mb-3 text-text-primary">S&eacute; parte del movimiento</h2>
+            <p className="text-text-secondary mb-8 max-w-lg mx-auto">
+              Segu&iacute; a @doncheli en redes sociales para no perderte ning&uacute;n LIVE,
+              actualizaci&oacute;n del proyecto y contenido sobre tecnolog&iacute;a e IA.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              {SOCIAL_LINKS.map((social, i) => (
+                <a
+                  key={i}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-5 py-3 rounded-xl bg-surface border border-border text-sm font-semibold text-text-primary hover:border-accent hover:text-accent transition-all"
+                >
+                  {social.label}
+                  <ExternalLink size={14} />
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+
+      </main>
+      <Footer onAboutClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
+    </div>
   )
 }
 
@@ -1091,7 +1295,7 @@ function SearchResultsView({ query, onClose, onSelectNews, headerProps }) {
           </div>
         )}
       </main>
-      <Footer />
+      <Footer onAboutClick={openAbout} />
     </div>
   )
 }
@@ -1109,6 +1313,7 @@ export default function App() {
   const [visibleCount, setVisibleCount] = useState(24)
   const [categoryFilter, setCategoryFilter] = useState('ALL')
   const [searchQuery, setSearchQuery] = useState(null)
+  const [showAbout, setShowAbout] = useState(false)
   const handleCountryChange = (code) => { trackCountryFilter(code); setCountryCode(code) }
   const { hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, loading, error } = useNewsSections(countryCode)
 
@@ -1149,6 +1354,15 @@ export default function App() {
     setSearchQuery(q)
     setSelectedNewsId(null)
     setShowAllNews(false)
+    setShowAbout(false)
+    window.scrollTo({ top: 0 })
+  }, [])
+
+  const openAbout = useCallback(() => {
+    setShowAbout(true)
+    setSelectedNewsId(null)
+    setShowAllNews(false)
+    setSearchQuery(null)
     window.scrollTo({ top: 0 })
   }, [])
 
@@ -1191,9 +1405,13 @@ export default function App() {
           onClose={closeArticle}
           onSelectNews={selectNews}
         />
-        <Footer />
+        <Footer onAboutClick={openAbout} />
       </div>
     )
+  }
+
+  if (showAbout) {
+    return <AboutPage onClose={() => setShowAbout(false)} headerProps={headerProps} />
   }
 
   if (searchQuery) {
@@ -1244,7 +1462,7 @@ export default function App() {
             </div>
           )}
         </main>
-        <Footer />
+        <Footer onAboutClick={openAbout} />
       </div>
     )
   }
@@ -1390,7 +1608,7 @@ export default function App() {
         )}
       </main>
 
-      <Footer />
+      <Footer onAboutClick={openAbout} />
     </div>
   )
 }

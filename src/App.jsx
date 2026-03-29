@@ -934,7 +934,7 @@ export default function App() {
     )
   }
 
-  const topStories = feed.slice(0, 8)
+  const topStories = feed.slice(0, 12)
   const investigations = [...daily, ...feed].filter((n, i, arr) => arr.findIndex(x => x.id === n.id) === i).slice(0, 8)
 
   return (

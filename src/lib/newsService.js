@@ -196,7 +196,7 @@ export async function fetchAllNews(countryCode) {
     .from('news')
     .select('*, news_sources(*)')
     .order('published_at', { ascending: false })
-    .limit(100)
+    .limit(200)
 
   query = applyCountryFilter(query, countryCode)
 

@@ -1841,11 +1841,12 @@ export default function App() {
   const investigations = daily.filter(n => !topStoryIds.has(n.id) && !heroIds.has(n.id)).slice(0, 8)
   const trending = [...allNews].sort((a, b) => (b.sourceCount || 0) - (a.sourceCount || 0)).filter(n => !topStoryIds.has(n.id)).slice(0, 5)
 
-  // Category carousels
-  const byCat = (cat) => allNews.filter(n => (n.category || '').toUpperCase().includes(cat)).slice(0, 10)
-  const politica = byCat('POLÍTICA')
-  const economia = byCat('ECONOMÍA')
-  const tecnologia = byCat('TECNOLOGÍA')
+  // Category carousels — normalize to strip accents for matching
+  const norm = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
+  const byCat = (cat) => allNews.filter(n => norm(n.category || '').includes(norm(cat))).slice(0, 12)
+  const politica = byCat('POLITICA')
+  const economia = byCat('ECONOMIA')
+  const tecnologia = byCat('TECNOLOGIA')
   const deportes = byCat('DEPORTES')
 
   return (

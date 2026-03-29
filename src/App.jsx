@@ -8,6 +8,10 @@ import {
 import ArticleView from './NewsDetailModal'
 import { useNewsSections, useNewsSearch } from './hooks/useNews'
 import AdBanner from './components/AdBanner'
+import {
+  trackCountryFilter, trackSearch, trackSectionView,
+  trackFakeNewsAlertView, trackSponsoredAlertView, trackAdImpression
+} from './lib/analytics'
 
 const COUNTRIES = [
   { code: 'ALL', name: 'Todos los países', emoji: '🌎' },
@@ -249,7 +253,7 @@ function Header({ onLogoClick, countryCode, onCountryChange }) {
                 placeholder="Buscar noticias..."
                 aria-label="Buscar noticias"
                 value={query}
-                onChange={e => setQuery(e.target.value)}
+                onChange={e => { setQuery(e.target.value); if (e.target.value.length >= 3) trackSearch(e.target.value, results?.length || 0) }}
                 className="w-full pl-9 pr-3 py-2 text-sm rounded-xl bg-surface border border-border text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
@@ -865,6 +869,7 @@ export default function App() {
     return id ? Number(id) : null
   })
   const [countryCode, setCountryCode] = useState('ALL')
+  const handleCountryChange = (code) => { trackCountryFilter(code); setCountryCode(code) }
   const { hero, daily, blindspot, feed, flagged, sponsored, allNews, loading, error } = useNewsSections(countryCode)
 
   const scrollPosRef = useRef(0)
@@ -918,7 +923,7 @@ export default function App() {
   if (selectedNewsId) {
     return (
       <div className="gradient-bg">
-        <Header onLogoClick={closeArticle} countryCode={countryCode} onCountryChange={setCountryCode} />
+        <Header onLogoClick={closeArticle} countryCode={countryCode} onCountryChange={handleCountryChange} />
         <ArticleView
           newsId={selectedNewsId}
           allNews={allNews}
@@ -935,7 +940,7 @@ export default function App() {
   return (
     <div className="gradient-bg" lang="es">
       <a href="#main-content" className="skip-link">Saltar al contenido principal</a>
-      <Header onLogoClick={closeArticle} countryCode={countryCode} onCountryChange={setCountryCode} />
+      <Header onLogoClick={closeArticle} countryCode={countryCode} onCountryChange={handleCountryChange} />
 
       <main id="main-content" role="main" aria-label="Contenido principal" className="max-w-7xl mx-auto pb-8">
         {/* Hero Carousel */}
@@ -1002,7 +1007,7 @@ export default function App() {
 
         {/* Alertas de Desinformación */}
         {flagged.length > 0 && (
-          <section className="px-4 sm:px-6 lg:px-8 mt-12">
+          <section className="px-4 sm:px-6 lg:px-8 mt-12" ref={el => { if (el) { const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { trackSectionView('desinformacion'); flagged.forEach(n => trackFakeNewsAlertView(n)); obs.disconnect() } }); obs.observe(el) } }}>
             <SectionHeader title="Alertas de Desinformación" subtitle="Noticias detectadas como falsas o engañosas por nuestra IA" icon={AlertTriangle} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {flagged.map(news => (
@@ -1014,7 +1019,7 @@ export default function App() {
 
         {/* Noticias Patrocinadas */}
         {sponsored.length > 0 && (
-          <section className="px-4 sm:px-6 lg:px-8 mt-12">
+          <section className="px-4 sm:px-6 lg:px-8 mt-12" ref={el => { if (el) { const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { trackSectionView('patrocinadas'); sponsored.forEach(n => trackSponsoredAlertView(n)); obs.disconnect() } }); obs.observe(el) } }}>
             <SectionHeader title="Noticias Patrocinadas" subtitle="Contenido detectado como pagado, propaganda o comunicado disfrazado de noticia" icon={DollarSign} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {sponsored.map(news => (

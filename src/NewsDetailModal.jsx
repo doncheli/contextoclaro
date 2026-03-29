@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   ShieldCheck, ShieldAlert, ShieldX, ShieldQuestion,
   CheckCircle, AlertOctagon,
@@ -6,6 +6,10 @@ import {
 } from 'lucide-react'
 import { useArticleDetail } from './hooks/useNews'
 import AdBanner from './components/AdBanner'
+import {
+  trackArticleView, trackArticleTimeSpent, trackVerificationView,
+  trackSourcesClick, trackReturnToFeed, observeScrollDepth, resetScrollTracking
+} from './lib/analytics'
 
 function NewsImage({ src, alt, className = "" }) {
   const [failed, setFailed] = useState(false)
@@ -360,12 +364,32 @@ function SourcesPanel({ sources, isOpen, onClose }) {
 
 export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) {
   const [showSources, setShowSources] = useState(false)
+  const startTimeRef = useRef(Date.now())
 
   const newsFromList = allNews.find(n => n.id === newsId)
   const { data: detail, loading, error } = useArticleDetail(newsId)
 
   // Use detail.news as fallback when article isn't in the preloaded list
   const news = newsFromList || (detail ? detail.news : null)
+
+  // Track article view + scroll depth + time spent
+  useEffect(() => {
+    if (!news) return
+    trackArticleView(news)
+    resetScrollTracking()
+    startTimeRef.current = Date.now()
+    const cleanupScroll = observeScrollDepth(newsId, document.documentElement)
+
+    if (news.geminiVerdict) {
+      trackVerificationView(newsId, news.geminiVerdict, news.geminiConfidence)
+    }
+
+    return () => {
+      cleanupScroll()
+      const seconds = Math.round((Date.now() - startTimeRef.current) / 1000)
+      trackArticleTimeSpent(newsId, seconds)
+    }
+  }, [newsId, news?.id])
 
   if (loading) {
     return (
@@ -405,7 +429,7 @@ export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) 
       {/* Back button */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <button
-          onClick={onClose}
+          onClick={() => { trackReturnToFeed(newsId); onClose() }}
           aria-label="Volver al inicio"
           className="flex items-center gap-2 text-sm text-text-secondary hover:text-accent transition-colors mb-4 group"
         >
@@ -481,7 +505,7 @@ export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) 
             offset={offset}
             bias={news.bias}
             sourceCount={detail.sources?.length || news.sourceCount || 0}
-            onShowSources={() => setShowSources(true)}
+            onShowSources={() => { trackSourcesClick(newsId, detail.sources?.length || 0); setShowSources(true) }}
             news={news}
             scores={detail.scores}
           />

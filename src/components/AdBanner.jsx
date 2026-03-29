@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { trackAdImpression } from '../lib/analytics'
 
 // Google AdSense Publisher ID — replace with your real ID
 const ADSENSE_PUB_ID = 'ca-pub-8704878719669732'
@@ -25,6 +26,7 @@ export default function AdBanner({ variant = 'section-break', className = '' }) 
       if (window.adsbygoogle && adRef.current) {
         window.adsbygoogle.push({})
         pushed.current = true
+        trackAdImpression(variant)
       }
     } catch (e) {
       // AdSense not loaded yet

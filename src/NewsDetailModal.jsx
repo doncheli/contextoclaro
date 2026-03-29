@@ -12,9 +12,14 @@ import {
 } from './lib/analytics'
 import { getFallbackImage } from './lib/categoryImages'
 
+function slugify(text) {
+  return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 80)
+}
+
 function ShareArticleButtons({ newsId, title }) {
   const [copied, setCopied] = useState(false)
-  const url = `https://contextoclaro.com/?article=${newsId}`
+  const slug = slugify(title || 'articulo')
+  const url = `https://contextoclaro.com/noticia/${slug}-${newsId}`
   const text = encodeURIComponent(title)
   const share = (method, link) => { trackShareClick(newsId, method); window.open(link, '_blank', 'width=600,height=400') }
   return (

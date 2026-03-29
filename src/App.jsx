@@ -18,6 +18,29 @@ import { getFallbackImage } from './lib/categoryImages'
 
 /* ═══════════════ HELPERS ═══════════════ */
 
+function slugify(text) {
+  return text
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 80)
+}
+
+function buildArticlePath(id, title) {
+  return `/noticia/${slugify(title || 'articulo')}-${id}`
+}
+
+function parseArticleIdFromPath() {
+  // Support new format: /noticia/slug-123
+  const match = window.location.pathname.match(/\/noticia\/.*-(\d+)$/)
+  if (match) return Number(match[1])
+  // Fallback: ?article=123
+  const params = new URLSearchParams(window.location.search)
+  const id = params.get('article')
+  return id ? Number(id) : null
+}
+
 function timeAgo(dateStr) {
   if (!dateStr) return ''
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -93,7 +116,7 @@ function BreakingNewsBanner({ flagged, onSelectNews }) {
 
 function ShareButtons({ news, size = 'sm' }) {
   const [copied, setCopied] = useState(false)
-  const url = `https://contextoclaro.com/?article=${news.id}`
+  const url = `https://contextoclaro.com${buildArticlePath(news.id, news.title)}`
   const text = encodeURIComponent(news.title)
 
   const share = (method, link) => {
@@ -1141,7 +1164,7 @@ function AboutPage({ onClose, headerProps }) {
               {
                 icon: '📊',
                 title: 'M&uacute;ltiples fuentes',
-                desc: 'No depend&eacute;s de una sola versi&oacute;n. Agregamos y comparamos c&oacute;mo cubren la misma historia diferentes medios de toda la regi&oacute;n.',
+                desc: 'No dependes de una sola versi&oacute;n. Agregamos y comparamos c&oacute;mo cubren la misma historia diferentes medios de toda la regi&oacute;n.',
               },
               {
                 icon: '🌎',
@@ -1193,8 +1216,8 @@ function AboutPage({ onClose, headerProps }) {
                 tiene que ser un esfuerzo colectivo.
               </p>
               <p>
-                Si sos desarrollador, periodista o simplemente alguien que cree en la verdad,
-                pod&eacute;s contribuir. La informaci&oacute;n verificada es un derecho, no un privilegio.
+                Si eres desarrollador, periodista o simplemente alguien que cree en la verdad,
+                puedes contribuir. La informaci&oacute;n verificada es un derecho, no un privilegio.
               </p>
               <a
                 href="https://github.com/doncheli/contextoclaro"
@@ -1234,7 +1257,7 @@ function AboutPage({ onClose, headerProps }) {
                   directamente falso. Sin pagar, sin muros, sin agenda.
                 </p>
                 <p>
-                  Si cre&eacute;s en este proyecto, la mejor forma de apoyar es compartirlo y seguir
+                  Si crees en este proyecto, la mejor forma de apoyar es compartirlo y seguir
                   a @doncheli en redes para estar al d&iacute;a con las actualizaciones.
                 </p>
               </div>
@@ -1247,7 +1270,7 @@ function AboutPage({ onClose, headerProps }) {
           <div className="card p-8 sm:p-10 text-center border border-border">
             <h2 className="text-2xl font-bold font-heading mb-3 text-text-primary">S&eacute; parte del movimiento</h2>
             <p className="text-text-secondary mb-8 max-w-lg mx-auto">
-              Segu&iacute; a @doncheli en redes sociales para no perderte ning&uacute;n LIVE,
+              S&iacute;gueme en redes sociales para que no te pierdas ning&uacute;n LIVE,
               actualizaci&oacute;n del proyecto y contenido sobre tecnolog&iacute;a e IA.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
@@ -1328,11 +1351,7 @@ function SearchResultsView({ query, onClose, onSelectNews, headerProps }) {
 /* ═══════════════ MAIN APP ═══════════════ */
 
 export default function App() {
-  const [selectedNewsId, setSelectedNewsId] = useState(() => {
-    const params = new URLSearchParams(window.location.search)
-    const id = params.get('article')
-    return id ? Number(id) : null
-  })
+  const [selectedNewsId, setSelectedNewsId] = useState(() => parseArticleIdFromPath())
   const [countryCode, setCountryCode] = useState('ALL')
   const [showAllNews, setShowAllNews] = useState(false)
   const [visibleCount, setVisibleCount] = useState(24)
@@ -1346,6 +1365,9 @@ export default function App() {
 
   const showAllRef = useRef(false)
 
+  const allNewsRef = useRef(allNews)
+  allNewsRef.current = allNews
+
   const selectNews = useCallback((id) => {
     if (id) {
       scrollPosRef.current = window.scrollY
@@ -1354,19 +1376,19 @@ export default function App() {
     }
     setSelectedNewsId(id)
     if (id) {
-      window.history.pushState({ articleId: id, scrollY: scrollPosRef.current, fromAllNews: showAllNews }, '', `?article=${id}`)
+      const news = allNewsRef.current?.find(n => n.id === id)
+      const path = buildArticlePath(id, news?.title)
+      window.history.pushState({ articleId: id, scrollY: scrollPosRef.current, fromAllNews: showAllNews }, '', path)
     } else {
-      window.history.pushState({}, '', window.location.pathname)
+      window.history.pushState({}, '', '/')
     }
   }, [showAllNews])
 
   const closeArticle = useCallback(() => {
     const wasInAllNews = showAllRef.current
-    // Batch: restore showAllNews BEFORE clearing selectedNewsId
     if (wasInAllNews) setShowAllNews(true)
-    // Use ReactDOM.flushSync-like approach: set both in same tick
     setSelectedNewsId(null)
-    window.history.pushState({}, '', window.location.pathname)
+    window.history.pushState({}, '', '/')
     const savedPos = scrollPosRef.current
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {

@@ -1117,6 +1117,7 @@ export default function App() {
           onClose={closeArticle}
           onSelectNews={selectNews}
         />
+        <Footer />
       </div>
     )
   }

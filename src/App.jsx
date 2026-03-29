@@ -1644,6 +1644,7 @@ export default function App() {
   const [showMethodology, setShowMethodology] = useState(() => window.location.pathname === '/metodologia')
   const handleCountryChange = (code) => { trackCountryFilter(code); setCountryCode(code) }
   const { hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, loading, error } = useNewsSections(countryCode)
+  const norm = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
 
   const scrollPosRef = useRef(0)
 
@@ -1789,7 +1790,7 @@ export default function App() {
 
   if (showAllNews) {
     const sorted = [...allNews].sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0))
-    const filtered = categoryFilter === 'ALL' ? sorted : sorted.filter(n => (n.category || '').toUpperCase().includes(categoryFilter))
+    const filtered = categoryFilter === 'ALL' ? sorted : sorted.filter(n => norm(n.category || '').includes(norm(categoryFilter)))
     const visible = filtered.slice(0, visibleCount)
     return (
       <div className="gradient-bg" lang="es">
@@ -1842,13 +1843,15 @@ export default function App() {
   const investigations = daily.filter(n => !topStoryIds.has(n.id) && !heroIds.has(n.id)).slice(0, 8)
   const trending = [...allNews].sort((a, b) => (b.sourceCount || 0) - (a.sourceCount || 0)).filter(n => !topStoryIds.has(n.id)).slice(0, 5)
 
-  // Category carousels — normalize to strip accents for matching
-  const norm = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
-  const byCat = (cat) => allNews.filter(n => norm(n.category || '').includes(norm(cat))).slice(0, 12)
-  const politica = byCat('POLITICA')
-  const economia = byCat('ECONOMIA')
-  const tecnologia = byCat('TECNOLOGIA')
-  const deportes = byCat('DEPORTES')
+  // Category carousels — match against multiple related category keywords
+  const byCats = (keywords) => allNews.filter(n => {
+    const cat = norm(n.category || '')
+    return keywords.some(k => cat.includes(k))
+  }).slice(0, 12)
+  const politica = byCats(['POLITICA', 'POLITICO', 'OPINION', 'NACIONAL'])
+  const economia = byCats(['ECONOMIA', 'MERCADO', 'FINANZA', 'NEGOCIOS'])
+  const tecnologia = byCats(['TECNOLOGIA', 'TECH', 'CIENCIA'])
+  const deportes = byCats(['DEPORTE'])
 
   return (
     <div className="gradient-bg" lang="es">

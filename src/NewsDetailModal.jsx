@@ -406,6 +406,15 @@ export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) 
   // Use detail.news as fallback when article isn't in the preloaded list
   const news = newsFromList || (detail ? detail.news : null)
 
+  // Update URL slug when article title is available
+  useEffect(() => {
+    if (!news?.title) return
+    const expectedPath = `/noticia/${slugify(news.title)}-${newsId}`
+    if (window.location.pathname !== expectedPath) {
+      window.history.replaceState(window.history.state, '', expectedPath)
+    }
+  }, [news?.title, newsId])
+
   // Track article view + scroll depth + time spent
   useEffect(() => {
     if (!news) return

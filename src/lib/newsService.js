@@ -227,10 +227,22 @@ export async function fetchArticleDetail(newsId) {
   if (paragraphsResult.error) throw paragraphsResult.error
 
   const row = newsResult.data
-  // Filter out HTML junk paragraphs (Google News RSS artifacts)
+  // Clean and split paragraphs properly
   const cleanBody = paragraphsResult.data
-    .map(p => p.content)
-    .filter(text => !text.includes('<a href') && !text.includes('&lt;a href') && text.length > 20)
+    .map(p => stripHtml(p.content))
+    .filter(text => text && text.length > 20 && !text.startsWith('http'))
+    .flatMap(text => {
+      // Split long concatenated blocks into proper paragraphs
+      // Detect sentences that end with period+capital letter without space
+      const fixed = text
+        .replace(/&nbsp;/g, ' ')
+        .replace(/\u00a0/g, ' ')
+        .replace(/\.([A-ZÁÉÍÓÚÑ¿¡])/g, '.\n$1')
+        .replace(/\?([A-ZÁÉÍÓÚÑ¿¡])/g, '?\n$1')
+        .replace(/!([A-ZÁÉÍÓÚÑ¿¡])/g, '!\n$1')
+        .replace(/\s{2,}/g, ' ')
+      return fixed.split('\n').map(s => s.trim()).filter(s => s.length > 15)
+    })
   return {
     news: mapNewsRow(row),
     body: cleanBody,

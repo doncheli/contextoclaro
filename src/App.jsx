@@ -925,15 +925,17 @@ export default function App() {
   }, [showAllNews])
 
   const closeArticle = useCallback(() => {
-    setSelectedNewsId(null)
     const wasInAllNews = showAllRef.current
-    if (wasInAllNews) {
-      setShowAllNews(true)
-    }
+    // Batch: restore showAllNews BEFORE clearing selectedNewsId
+    if (wasInAllNews) setShowAllNews(true)
+    // Use ReactDOM.flushSync-like approach: set both in same tick
+    setSelectedNewsId(null)
     window.history.pushState({}, '', window.location.pathname)
     const savedPos = scrollPosRef.current
     requestAnimationFrame(() => {
-      window.scrollTo({ top: savedPos })
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: savedPos })
+      })
     })
   }, [])
 
@@ -943,8 +945,8 @@ export default function App() {
         setSelectedNewsId(event.state.articleId)
         window.scrollTo({ top: 0 })
       } else {
+        if (event.state?.fromAllNews) setShowAllNews(true)
         setSelectedNewsId(null)
-        // Restore scroll from saved state
         const savedPos = event.state?.scrollY || scrollPosRef.current
         requestAnimationFrame(() => {
           window.scrollTo({ top: savedPos })

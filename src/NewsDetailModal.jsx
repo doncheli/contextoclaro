@@ -436,10 +436,10 @@ export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <button
           onClick={() => { trackReturnToFeed(newsId); onClose() }}
-          aria-label="Volver al inicio"
+          aria-label="Volver"
           className="flex items-center gap-2 text-sm text-text-secondary hover:text-accent transition-colors mb-4 group"
         >
-          <ArrowLeft size={16} aria-hidden="true" className="group-hover:-translate-x-0.5 transition-transform" /> Volver al inicio
+          <ArrowLeft size={16} aria-hidden="true" className="group-hover:-translate-x-0.5 transition-transform" /> Volver
         </button>
       </div>
 

@@ -360,59 +360,121 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ═══════════════ LIGHT THEME ═══════════════ */
 [data-theme="light"] {
-  --color-base: #f0f2f5;
-  --color-surface: #ffffff;
+  /* Base surfaces — warm grays to avoid clinical white */
+  --color-base: #f3f4f6;
+  --color-surface: #edf0f4;
   --color-card: #ffffff;
-  --color-card-hover: #f8fafc;
-  --color-border: rgba(0, 0, 0, 0.08);
-  --color-border-hover: rgba(0, 0, 0, 0.15);
-  --color-accent: #2563eb;
-  --color-accent-light: #3b82f6;
-  --color-accent-muted: rgba(37, 99, 235, 0.1);
-  --color-success: #059669;
-  --color-success-muted: rgba(5, 150, 105, 0.1);
-  --color-warning: #d97706;
-  --color-warning-muted: rgba(217, 119, 6, 0.1);
-  --color-danger: #dc2626;
-  --color-danger-muted: rgba(220, 38, 38, 0.1);
-  --color-bias-left: #dc2626;
-  --color-bias-center: #475569;
-  --color-bias-right: #2563eb;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94a3b8;
+  --color-card-hover: #f9fafb;
+
+  /* Borders — slightly stronger for card separation on light bg */
+  --color-border: rgba(0, 0, 0, 0.10);
+  --color-border-hover: rgba(0, 0, 0, 0.18);
+
+  /* Accent — deeper blue for readability on white */
+  --color-accent: #1d4ed8;
+  --color-accent-light: #2563eb;
+  --color-accent-muted: rgba(29, 78, 216, 0.08);
+
+  /* Semantic — more saturated to pop on light backgrounds */
+  --color-success: #047857;
+  --color-success-muted: rgba(4, 120, 87, 0.10);
+  --color-warning: #b45309;
+  --color-warning-muted: rgba(180, 83, 9, 0.10);
+  --color-danger: #b91c1c;
+  --color-danger-muted: rgba(185, 28, 28, 0.08);
+
+  /* Bias — high contrast versions */
+  --color-bias-left: #b91c1c;
+  --color-bias-center: #374151;
+  --color-bias-right: #1d4ed8;
+
+  /* Text — dark slate for maximum readability */
+  --color-text-primary: #111827;
+  --color-text-secondary: #374151;
+  --color-text-muted: #6b7280;
 }
 [data-theme="light"] body {
   background-color: var(--color-base);
 }
 [data-theme="light"] .gradient-bg {
-  background: linear-gradient(160deg, #f0f2f5 0%, #e8ebf0 30%, #f0f2f5 60%, #edf0f4 100%);
+  background: linear-gradient(160deg, #f3f4f6 0%, #e5e7eb 30%, #f3f4f6 60%, #e5e7eb 100%);
 }
-[data-theme="light"] .glass-strong {
-  background: rgba(255, 255, 255, 0.95);
+[data-theme="light"] .glass {
+  background: rgba(255, 255, 255, 0.80);
   border-color: rgba(0, 0, 0, 0.08);
 }
+[data-theme="light"] .glass-strong {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(0, 0, 0, 0.10);
+}
 [data-theme="light"] .card {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 [data-theme="light"] .card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  border-color: rgba(29, 78, 216, 0.20);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(29, 78, 216, 0.06);
 }
 [data-theme="light"] .img-overlay {
-  background: linear-gradient(to top, rgba(255,255,255,0.9), transparent 60%) !important;
+  background: linear-gradient(to top, rgba(255,255,255,0.95), rgba(255,255,255,0.4) 40%, transparent 100%) !important;
 }
 [data-theme="light"] .news-placeholder {
-  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+}
+[data-theme="light"] .sponsored-card {
+  background: linear-gradient(170deg, #ffffff 0%, #fffbeb 100%);
+}
+[data-theme="light"] .sponsored-card:hover {
+  box-shadow: 0 4px 20px rgba(180, 83, 9, 0.08), 0 0 0 1px rgba(180, 83, 9, 0.12);
+}
+[data-theme="light"] .sponsored-placeholder {
+  background: linear-gradient(135deg, rgba(180, 83, 9, 0.06) 0%, #f9fafb 50%, rgba(180, 83, 9, 0.04) 100%);
+}
+[data-theme="light"] .methodology-banner {
+  background: linear-gradient(135deg, rgba(29, 78, 216, 0.06) 0%, rgba(243, 244, 246, 0.95) 40%, rgba(29, 78, 216, 0.04) 100%);
+}
+[data-theme="light"] .verificador-sidebar {
+  background: linear-gradient(165deg, #ffffff 0%, #f9fafb 50%, #ffffff 100%);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+[data-theme="light"] .tooltip-bubble {
+  background: #1f2937;
+  color: #f9fafb;
+  border-color: #374151;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+[data-theme="light"] .tooltip-bubble::after {
+  border-top-color: #374151;
 }
 [data-theme="light"] ::-webkit-scrollbar-track {
-  background: #f0f2f5;
+  background: #f3f4f6;
 }
 [data-theme="light"] ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #d1d5db;
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
 }
 [data-theme="light"] ::selection {
-  background: rgba(37, 99, 235, 0.2);
-  color: #0f172a;
+  background: rgba(29, 78, 216, 0.2);
+  color: #111827;
+}
+[data-theme="light"] .shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.03) 50%, transparent 100%);
+  background-size: 200% 100%;
+}
+/* Article body in light mode — ensure dark text */
+[data-theme="light"] .article-body,
+[data-theme="light"] .article-body * {
+  color: #1f2937 !important;
+}
+[data-theme="light"] .article-body a {
+  color: var(--color-accent) !important;
+}
+[data-theme="light"] .article-body a:hover {
+  color: var(--color-accent-light) !important;
 }
 
 /* ═══════════════ HEADER/FOOTER DARKER ═══════════════ */
@@ -423,23 +485,26 @@ h1, h2, h3, h4, h5, h6 {
   border-bottom: 1px solid rgba(148, 163, 184, 0.08);
 }
 [data-theme="light"] .header-dark {
-  background: rgba(15, 23, 42, 0.97);
+  background: rgba(17, 24, 39, 0.97);
 }
 .footer-dark {
   background: #060a12;
   border-top: 1px solid rgba(148, 163, 184, 0.08);
 }
 [data-theme="light"] .footer-dark {
-  background: #0f172a;
-  color: #f1f5f9;
+  background: #111827;
+  color: #f9fafb;
 }
 [data-theme="light"] .footer-dark a,
 [data-theme="light"] .footer-dark span,
 [data-theme="light"] .footer-dark p {
-  color: #94a3b8;
+  color: #9ca3af;
+}
+[data-theme="light"] .footer-dark a:hover {
+  color: #60a5fa;
 }
 [data-theme="light"] .footer-dark h4 {
-  color: #f1f5f9;
+  color: #f9fafb;
 }
 
 /* ═══════════════ BREAKING NEWS ═══════════════ */

@@ -806,7 +806,7 @@ function SponsoredNewsCard({ news, onSelectNews }) {
         {news.image ? (
           <>
             <NewsImage src={news.image} alt={news.title} news={news} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1a2540] via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
           </>
         ) : (
           <div className="w-full h-full sponsored-placeholder flex flex-col items-center justify-center gap-2">
@@ -945,7 +945,7 @@ function StatsBar({ stats }) {
         </div>
         <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 sm:gap-3">
           {items.map((item, i) => (
-            <div key={i} className={`rounded-xl p-3 text-center ${item.bg} border border-white/5`}>
+            <div key={i} className={`rounded-xl p-3 text-center ${item.bg} border border-border`}>
               {item.icon ? <item.icon size={16} className={`${item.color} mx-auto mb-1.5`} /> : <span className={`text-sm ${item.color} block mb-1`}>{item.emoji}</span>}
               <p className={`text-lg sm:text-xl font-bold font-heading ${item.color}`}>{item.value}</p>
               <p className="text-[9px] sm:text-[10px] text-text-muted mt-0.5 leading-tight">{item.label}</p>

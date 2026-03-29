@@ -104,7 +104,7 @@ function AIValidationSection({ news }) {
   return (
     <div className={`rounded-xl p-4 border-2 ${c.border} bg-gradient-to-br ${c.bg} mb-5 shadow-lg ${c.glow}`}>
       <div className="flex items-center gap-2 mb-2">
-        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${c.color} bg-white/5`}>
+        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${c.color} bg-surface`}>
           <Icon size={16} />
         </div>
         <span className={`text-[11px] font-bold tracking-wider ${c.color}`}>VALIDACIÓN IA</span>
@@ -176,7 +176,7 @@ function VerificadorSidebar({ overall, sc, r, circ, offset, bias, sourceCount, o
         <div className="flex flex-col items-center mb-6 py-3 mx-auto">
           <div className="relative flex items-center justify-center">
             <svg width={140} height={140} className="transform -rotate-90" aria-hidden="true">
-              <circle cx={70} cy={70} r={56} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="10" />
+              <circle cx={70} cy={70} r={56} fill="none" className="stroke-border" strokeWidth="10" />
               <circle cx={70} cy={70} r={56} fill="none"
                 strokeWidth="10" strokeLinecap="round" strokeDasharray={2 * Math.PI * 56} strokeDashoffset={2 * Math.PI * 56 - (overall / 100) * 2 * Math.PI * 56}
                 className={`stroke-current ${sc.text} ring-animate`}

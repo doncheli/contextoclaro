@@ -360,7 +360,7 @@ function CountryDropdown({ value, onChange }) {
   )
 }
 
-function Header({ onLogoClick, countryCode, onCountryChange, onSelectNews, onSearch, onAboutClick }) {
+function Header({ onLogoClick, countryCode, onCountryChange, onSelectNews, onSearch, onAboutClick, onCategoryFilter }) {
   const { query, setQuery, results, searching } = useNewsSearch()
   const [searchFocused, setSearchFocused] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -379,10 +379,10 @@ function Header({ onLogoClick, countryCode, onCountryChange, onSelectNews, onSea
   }
 
   const navItems = [
-    { label: 'Blindspot', icon: Eye },
-    { label: 'Política', icon: BarChart3 },
-    { label: 'Economía', icon: TrendingUp },
-    { label: 'Verificador', icon: ShieldCheck },
+    { label: 'Política', icon: BarChart3, onClick: () => onCategoryFilter?.('POLÍTICA') },
+    { label: 'Economía', icon: TrendingUp, onClick: () => onCategoryFilter?.('ECONOMÍA') },
+    { label: 'Deportes', icon: Flame, onClick: () => onCategoryFilter?.('DEPORTES') },
+    { label: 'Verificador', icon: ShieldCheck, onClick: () => onCategoryFilter?.('DESINFORMACIÓN') },
     { label: 'Acerca de', icon: Compass, onClick: onAboutClick },
   ]
 
@@ -1708,12 +1708,24 @@ export default function App() {
     window.scrollTo({ top: 0 })
   }, [])
 
+  const filterByCategory = useCallback((cat) => {
+    setCategoryFilter(cat)
+    setShowAllNews(true)
+    setSelectedNewsId(null)
+    setShowAbout(false)
+    setShowMethodology(false)
+    setSearchQuery(null)
+    setVisibleCount(24)
+    window.scrollTo({ top: 0 })
+  }, [])
+
   const headerProps = {
     countryCode,
     onCountryChange: handleCountryChange,
     onSelectNews: selectNews,
     onSearch: handleSearch,
     onAboutClick: openAbout,
+    onCategoryFilter: filterByCategory,
   }
 
   useEffect(() => {

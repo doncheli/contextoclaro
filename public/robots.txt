@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_next/
+Disallow: /.vercel/
+
+# Sitemaps
+Sitemap: https://contextoclaro.com/sitemap.xml
+Sitemap: https://contextoclaro.com/sitemap-news.xml
+
+# Google News Bot
+User-agent: Googlebot-News
+Allow: /
+
+# Crawl-delay for bots (optional)
+User-agent: Bingbot
+Crawl-delay: 1
+
+User-agent: Yandex
+Crawl-delay: 2

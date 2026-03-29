@@ -66,10 +66,8 @@ export default function AdBanner({ variant = 'section-break', className = '' }) 
 
   const config = configs[variant] || configs['section-break']
 
-  // When ads are disabled, show placeholder for development
-  if (!ADS_ENABLED) {
-    return <AdPlaceholder variant={variant} className={className} />
-  }
+  // Hide completely when ads are not serving yet
+  if (!ADS_ENABLED) return null
 
   return (
     <div className={`ad-container ${config.wrapper} ${className}`} aria-hidden="true">

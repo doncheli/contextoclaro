@@ -901,6 +901,8 @@ export default function App() {
     return id ? Number(id) : null
   })
   const [countryCode, setCountryCode] = useState('ALL')
+  const [showAllNews, setShowAllNews] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(24)
   const handleCountryChange = (code) => { trackCountryFilter(code); setCountryCode(code) }
   const { hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, loading, error } = useNewsSections(countryCode)
 
@@ -952,6 +954,45 @@ export default function App() {
   if (error) return <ErrorState message={error} />
   if (!hero) return <ErrorState message="No se encontraron noticias" />
 
+  if (showAllNews) {
+    const sorted = [...allNews].sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0))
+    const visible = sorted.slice(0, visibleCount)
+    return (
+      <div className="gradient-bg" lang="es">
+        <Header onLogoClick={() => { setShowAllNews(false); setVisibleCount(24) }} countryCode={countryCode} onCountryChange={handleCountryChange} />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <button onClick={() => { setShowAllNews(false); setVisibleCount(24) }} className="text-text-secondary hover:text-accent transition-colors">
+                <ChevronRight size={20} className="rotate-180" />
+              </button>
+              <div>
+                <h1 className="text-xl font-bold font-heading">Todas las Noticias</h1>
+                <p className="text-xs text-text-muted">{sorted.length} noticias · Ordenadas por fecha</p>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {visible.map(news => (
+              <NewsCard key={news.id} news={news} onSelectNews={selectNews} variant="compact" />
+            ))}
+          </div>
+          {visibleCount < sorted.length && (
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={() => setVisibleCount(prev => prev + 24)}
+                className="px-8 py-3 rounded-xl bg-accent text-white font-semibold hover:bg-accent/90 transition-colors"
+              >
+                Cargar más noticias ({sorted.length - visibleCount} restantes)
+              </button>
+            </div>
+          )}
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
   if (selectedNewsId) {
     return (
       <div className="gradient-bg">
@@ -984,7 +1025,7 @@ export default function App() {
         {/* Resumen Diario */}
         {daily.length > 0 && (
           <section className="px-4 sm:px-6 lg:px-8 mt-12 slide-up">
-            <SectionHeader title="Resumen Diario" subtitle="Las noticias más relevantes de hoy" icon={TrendingUp} onSeeMore={() => {}} />
+            <SectionHeader title="Resumen Diario" subtitle="Las noticias más relevantes de hoy" icon={TrendingUp} onSeeMore={() => { setShowAllNews(true); setVisibleCount(24); window.scrollTo({ top: 0 }) }} />
             <ScrollSection>
               {daily.map(news => (
                 <div key={news.id} className="min-w-[280px] max-w-[300px] shrink-0">
@@ -1006,7 +1047,7 @@ export default function App() {
         {/* Top News Stories - Grid layout */}
         {topStories.length > 0 && (
           <section className="px-4 sm:px-6 lg:px-8 mt-12">
-            <SectionHeader title="Noticias Principales" subtitle="Cobertura verificada de múltiples fuentes" icon={BarChart3} onSeeMore={() => {}} />
+            <SectionHeader title="Noticias Principales" subtitle="Cobertura verificada de múltiples fuentes" icon={BarChart3} onSeeMore={() => { setShowAllNews(true); setVisibleCount(24); window.scrollTo({ top: 0 }) }} />
             <GridSection>
               {topStories.map((news, i) => (
                 <React.Fragment key={news.id}>
@@ -1026,7 +1067,7 @@ export default function App() {
         {/* Investigaciones */}
         {investigations.length > 0 && (
           <section className="px-4 sm:px-6 lg:px-8 mt-12">
-            <SectionHeader title="Investigaciones" subtitle="Análisis en profundidad" icon={Eye} onSeeMore={() => {}} />
+            <SectionHeader title="Investigaciones" subtitle="Análisis en profundidad" icon={Eye} onSeeMore={() => { setShowAllNews(true); setVisibleCount(24); window.scrollTo({ top: 0 }) }} />
             <ScrollSection>
               {investigations.map(news => (
                 <div key={news.id} className="min-w-[260px] max-w-[280px] shrink-0">
@@ -1069,7 +1110,7 @@ export default function App() {
         {/* Blindspots Regionales */}
         {blindspot.length > 0 && (
           <section className="px-4 sm:px-6 lg:px-8 mt-12">
-            <SectionHeader title="Puntos Ciegos" subtitle="Noticias con cobertura desbalanceada" icon={Compass} onSeeMore={() => {}} />
+            <SectionHeader title="Puntos Ciegos" subtitle="Noticias con cobertura desbalanceada" icon={Compass} onSeeMore={() => { setShowAllNews(true); setVisibleCount(24); window.scrollTo({ top: 0 }) }} />
             <ScrollSection>
               {blindspot.map(news => (
                 <div key={news.id} className="min-w-[260px] max-w-[280px] shrink-0">

@@ -908,24 +908,29 @@ export default function App() {
 
   const scrollPosRef = useRef(0)
 
+  const showAllRef = useRef(false)
+
   const selectNews = useCallback((id) => {
     if (id) {
-      // Save scroll position before navigating to article
       scrollPosRef.current = window.scrollY
+      showAllRef.current = showAllNews
       window.scrollTo({ top: 0 })
     }
     setSelectedNewsId(id)
     if (id) {
-      window.history.pushState({ articleId: id, scrollY: scrollPosRef.current }, '', `?article=${id}`)
+      window.history.pushState({ articleId: id, scrollY: scrollPosRef.current, fromAllNews: showAllNews }, '', `?article=${id}`)
     } else {
       window.history.pushState({}, '', window.location.pathname)
     }
-  }, [])
+  }, [showAllNews])
 
   const closeArticle = useCallback(() => {
     setSelectedNewsId(null)
+    const wasInAllNews = showAllRef.current
+    if (wasInAllNews) {
+      setShowAllNews(true)
+    }
     window.history.pushState({}, '', window.location.pathname)
-    // Restore scroll position after React renders the feed
     const savedPos = scrollPosRef.current
     requestAnimationFrame(() => {
       window.scrollTo({ top: savedPos })
@@ -953,6 +958,20 @@ export default function App() {
   if (loading) return <LoadingSkeleton />
   if (error) return <ErrorState message={error} />
   if (!hero) return <ErrorState message="No se encontraron noticias" />
+
+  if (selectedNewsId) {
+    return (
+      <div className="gradient-bg">
+        <Header onLogoClick={closeArticle} countryCode={countryCode} onCountryChange={handleCountryChange} />
+        <ArticleView
+          newsId={selectedNewsId}
+          allNews={allNews}
+          onClose={closeArticle}
+          onSelectNews={selectNews}
+        />
+      </div>
+    )
+  }
 
   if (showAllNews) {
     const sorted = [...allNews].sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0))
@@ -989,20 +1008,6 @@ export default function App() {
           )}
         </main>
         <Footer />
-      </div>
-    )
-  }
-
-  if (selectedNewsId) {
-    return (
-      <div className="gradient-bg">
-        <Header onLogoClick={closeArticle} countryCode={countryCode} onCountryChange={handleCountryChange} />
-        <ArticleView
-          newsId={selectedNewsId}
-          allNews={allNews}
-          onClose={closeArticle}
-          onSelectNews={selectNews}
-        />
       </div>
     )
   }

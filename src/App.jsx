@@ -80,9 +80,10 @@ const CATEGORIES = [
 ]
 
 const COUNTRIES = [
-  { code: 'ALL', name: 'Todos los países', emoji: '🌎' },
+  { code: 'ALL', name: 'Todos', emoji: '🌎' },
   { code: 'VE', name: 'Venezuela', emoji: '🇻🇪' },
   { code: 'CO', name: 'Colombia', emoji: '🇨🇴' },
+  { code: 'TECH', name: 'Tecnología', emoji: '🌐' },
 ]
 
 /* ═══════════════ BREAKING NEWS BANNER ═══════════════ */

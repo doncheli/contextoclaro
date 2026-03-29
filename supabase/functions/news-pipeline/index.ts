@@ -37,6 +37,14 @@ const RSS_FEEDS = {
     { name: "El Espectador", url: "https://www.elespectador.com/rss", bias: "centro-izquierda", credibility: 85 },
     { name: "La Silla Vacía", url: "https://www.lasillavacia.com/feed/", bias: "centro", credibility: 92 },
   ],
+  TECH: [
+    { name: "The Verge", url: "https://www.theverge.com/rss/index.xml", bias: "centro", credibility: 88 },
+    { name: "Ars Technica", url: "https://feeds.arstechnica.com/arstechnica/index", bias: "centro", credibility: 92 },
+    { name: "TechCrunch", url: "https://techcrunch.com/feed/", bias: "centro", credibility: 85 },
+    { name: "Wired", url: "https://www.wired.com/feed/rss", bias: "centro-izquierda", credibility: 88 },
+    { name: "Xataka", url: "https://www.xataka.com/feedburner.xml", bias: "centro", credibility: 84 },
+    { name: "Hipertextual", url: "https://hipertextual.com/feed", bias: "centro", credibility: 82 },
+  ],
 };
 
 // ══════════════════════════════════════════════════════════
@@ -249,8 +257,10 @@ async function scrapeFeed(
     if (!resp.ok) return [];
     const xml = await resp.text();
     const items = parseRss(xml);
-    const emoji = countryKey === "VE" ? "🇻🇪" : "🇨🇴";
-    const countryName = countryKey === "VE" ? "VENEZUELA" : "COLOMBIA";
+    const emojiMap: Record<string, string> = { VE: "🇻🇪", CO: "🇨🇴", TECH: "🌐" };
+    const nameMap: Record<string, string> = { VE: "VENEZUELA", CO: "COLOMBIA", TECH: "TECNOLOGÍA" };
+    const emoji = emojiMap[countryKey] || "🌐";
+    const countryName = nameMap[countryKey] || "GLOBAL";
 
     return items.slice(0, 8).map((item) => {
       // Extract paragraphs from RSS content:encoded if available
@@ -264,7 +274,9 @@ async function scrapeFeed(
         description: item.description,
         url: item.link,
         image: item.image,
-        category: `${countryName} · ${item.category || "GENERAL"}`.toUpperCase(),
+        category: countryKey === "TECH"
+          ? "TECNOLOGÍA"
+          : `${countryName} · ${item.category || "GENERAL"}`.toUpperCase(),
         country: emoji,
         country_code: countryKey,
         source_name: feed.name,
@@ -378,7 +390,7 @@ Analiza esta noticia y determina su veracidad.
 NOTICIA:
 - Título: ${article.title}
 - Fuente: ${article.source_name} (sesgo: ${article.source_bias}, credibilidad: ${article.source_credibility}/100)
-- País: ${article.country_code === "VE" ? "Venezuela" : "Colombia"}
+- País: ${article.country_code === "VE" ? "Venezuela" : article.country_code === "CO" ? "Colombia" : "Internacional (Tecnología)"}
 - Fecha: ${article.published_at}
 - Contenido: ${contentPreview}
 
@@ -629,6 +641,7 @@ serve(async (_req: Request) => {
     const allFeeds = [
       ...RSS_FEEDS.VE.map((f) => ({ feed: f, key: "VE" })),
       ...RSS_FEEDS.CO.map((f) => ({ feed: f, key: "CO" })),
+      ...RSS_FEEDS.TECH.map((f) => ({ feed: f, key: "TECH" })),
     ];
 
     const scrapeResults = await Promise.allSettled(
@@ -666,7 +679,8 @@ serve(async (_req: Request) => {
     // Select up to 10 new articles per country
     const veArticles = newArticles.filter((a) => a.country_code === "VE").slice(0, 10);
     const coArticles = newArticles.filter((a) => a.country_code === "CO").slice(0, 10);
-    const articlesToProcess = [...veArticles, ...coArticles];
+    const techArticles = newArticles.filter((a) => a.country_code === "TECH").slice(0, 10);
+    const articlesToProcess = [...veArticles, ...coArticles, ...techArticles];
 
     // Parallel content fetching (all at once, each has its own 10s timeout)
     await Promise.allSettled(

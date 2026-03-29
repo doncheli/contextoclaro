@@ -61,7 +61,7 @@ function mapNewsRow(row) {
   }
 }
 
-const ALLOWED_COUNTRIES = ['VE', 'CO']
+const ALLOWED_COUNTRIES = ['VE', 'CO', 'TECH']
 
 /**
  * Helper: aplica filtro de country_code a un query builder.

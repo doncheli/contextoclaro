@@ -61,6 +61,33 @@ const COUNTRIES = [
   { code: 'CO', name: 'Colombia', emoji: '🇨🇴' },
 ]
 
+/* ═══════════════ BREAKING NEWS BANNER ═══════════════ */
+
+function BreakingNewsBanner({ flagged, onSelectNews }) {
+  const breaking = flagged.filter(n => n.geminiVerdict === 'fake' || n.geminiVerdict === 'misleading').slice(0, 3)
+  if (breaking.length === 0) return null
+
+  return (
+    <div className="bg-danger/90 text-white relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center gap-3">
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="w-2 h-2 rounded-full bg-white breaking-dot" />
+          <span className="text-[11px] font-bold tracking-wider uppercase">Alerta</span>
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <div className="flex items-center gap-6 breaking-scroll whitespace-nowrap">
+            {breaking.map(news => (
+              <button key={news.id} onClick={() => onSelectNews(news.id)} className="text-xs font-medium hover:underline shrink-0">
+                {news.geminiVerdict === 'fake' ? '🚨 FALSA: ' : '⚠️ ENGAÑOSA: '}{news.title}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ═══════════════ SHARE BUTTONS ═══════════════ */
 
 function ShareButtons({ news, size = 'sm' }) {
@@ -322,7 +349,7 @@ function Header({ onLogoClick, countryCode, onCountryChange }) {
   ]
 
   return (
-    <header className="sticky top-0 z-50 glass-strong" role="banner">
+    <header className="sticky top-0 z-50 header-dark" role="banner">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -377,6 +404,20 @@ function Header({ onLogoClick, countryCode, onCountryChange }) {
                 </div>
               )}
             </div>
+
+            {/* Theme toggle */}
+            <button
+              onClick={() => {
+                const current = document.documentElement.getAttribute('data-theme')
+                const next = current === 'light' ? 'dark' : 'light'
+                document.documentElement.setAttribute('data-theme', next)
+                localStorage.setItem('theme', next)
+              }}
+              aria-label="Cambiar tema"
+              className="w-9 h-9 rounded-xl bg-surface/50 border border-border flex items-center justify-center text-text-secondary hover:text-accent transition-colors"
+            >
+              <span className="text-sm">🌗</span>
+            </button>
 
             {/* Mobile menu toggle */}
             <button
@@ -920,25 +961,38 @@ function StatsBar({ stats }) {
 
 function Footer() {
   const columns = [
-    { title: 'Explorar', links: ['Blindspot', 'Política', 'Economía', 'Verificador'] },
-    { title: 'Países', links: ['Venezuela', 'Colombia'] },
-    { title: 'Sobre nosotros', links: ['Metodología', 'Equipo', 'Contacto', 'Blog'] },
-    { title: 'Legal', links: ['Privacidad', 'Términos', 'Cookies'] },
+    { title: 'Explorar', links: [
+      { label: 'Política', href: '#' },
+      { label: 'Economía', href: '#' },
+      { label: 'Seguridad', href: '#' },
+      { label: 'Deportes', href: '#' },
+    ]},
+    { title: 'Verificación', links: [
+      { label: 'Fake News', href: '#' },
+      { label: 'Patrocinadas', href: '#' },
+      { label: 'Metodología', href: '#' },
+      { label: 'RSS Feed', href: '/rss.xml' },
+    ]},
+    { title: 'Legal', links: [
+      { label: 'Privacidad', href: '/privacy.html' },
+      { label: 'Términos', href: '#' },
+      { label: 'Ads.txt', href: '/ads.txt' },
+    ]},
   ]
 
   return (
-    <footer className="mt-20 border-t border-border">
+    <footer className="mt-20 footer-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col lg:flex-row justify-between gap-10">
           {/* Link columns */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 flex-1">
             {columns.map(col => (
               <div key={col.title}>
-                <h4 className="text-sm font-bold text-text-primary mb-4 font-heading">{col.title}</h4>
+                <h4 className="text-sm font-bold mb-4 font-heading">{col.title}</h4>
                 <ul className="space-y-2.5">
                   {col.links.map(link => (
-                    <li key={link}>
-                      <a href="#" className="text-sm text-text-secondary hover:text-accent transition-colors">{link}</a>
+                    <li key={link.label}>
+                      <a href={link.href} className="text-sm hover:text-accent transition-colors">{link.label}</a>
                     </li>
                   ))}
                 </ul>
@@ -1127,6 +1181,7 @@ export default function App() {
     <div className="gradient-bg" lang="es">
       <a href="#main-content" className="skip-link">Saltar al contenido principal</a>
       <Header onLogoClick={closeArticle} countryCode={countryCode} onCountryChange={handleCountryChange} />
+      <BreakingNewsBanner flagged={flagged} onSelectNews={selectNews} />
 
       <main id="main-content" role="main" aria-label="Contenido principal" className="max-w-7xl mx-auto pb-8">
         {/* Hero Carousel */}

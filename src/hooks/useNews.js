@@ -9,6 +9,7 @@ import {
   fetchAllNews,
   fetchArticleDetail,
   searchNews,
+  fetchSiteStats,
 } from '../lib/newsService'
 
 /**
@@ -31,7 +32,7 @@ export function useNewsSections(countryCode = 'ALL') {
 
   const loadData = useCallback(async () => {
     try {
-      const [hero, daily, blindspot, feed, flagged, sponsored, allNews] = await Promise.all([
+      const [hero, daily, blindspot, feed, flagged, sponsored, allNews, stats] = await Promise.all([
         fetchHeroNews(countryCode),
         fetchDailyNews(countryCode),
         fetchBlindspotNews(countryCode),
@@ -39,6 +40,7 @@ export function useNewsSections(countryCode = 'ALL') {
         fetchFlaggedNews(countryCode),
         fetchSponsoredNews(countryCode),
         fetchAllNews(countryCode),
+        fetchSiteStats(countryCode),
       ])
 
       if (!mountedRef.current) return
@@ -53,6 +55,7 @@ export function useNewsSections(countryCode = 'ALL') {
         flagged,
         sponsored,
         allNews,
+        stats,
       })
       setError(null)
     } catch (err) {

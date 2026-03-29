@@ -789,23 +789,37 @@ function MethodologyBanner() {
 
 /* ═══════════════ STATS BAR ═══════════════ */
 
-function StatsBar({ daily, feed, blindspot }) {
-  const stats = [
-    { label: 'Noticias hoy', value: daily.length + feed.length, icon: TrendingUp },
-    { label: 'Fuentes analizadas', value: (daily.length + feed.length) * 5, icon: Eye },
-    { label: 'Puntos ciegos', value: blindspot.length, icon: Compass },
+function StatsBar({ stats }) {
+  if (!stats) return null
+
+  const items = [
+    { label: 'Verificadas por IA', value: stats.aiValidated, icon: ShieldCheck, color: 'text-success', bg: 'bg-success/10' },
+    { label: 'Noticias Reales', value: stats.verified, icon: CheckCircle, color: 'text-success', bg: 'bg-success/10' },
+    { label: 'Engañosas', value: stats.misleading, icon: ShieldAlert, color: 'text-warning', bg: 'bg-warning/10' },
+    { label: 'Falsas detectadas', value: stats.fake, icon: ShieldX, color: 'text-danger', bg: 'bg-danger/10' },
+    { label: 'Patrocinadas', value: stats.sponsored, icon: DollarSign, color: 'text-warning', bg: 'bg-warning/10' },
+    { label: 'Sesgo Izquierda', value: stats.biasLeft, icon: null, color: 'text-bias-left', bg: 'bg-bias-left/10', emoji: '◀' },
+    { label: 'Sesgo Centro', value: stats.biasCenter, icon: null, color: 'text-bias-center', bg: 'bg-bias-center/10', emoji: '◆' },
+    { label: 'Sesgo Derecha', value: stats.biasRight, icon: null, color: 'text-bias-right', bg: 'bg-bias-right/10', emoji: '▶' },
   ]
 
   return (
     <section className="px-4 sm:px-6 lg:px-8 mt-8">
-      <div className="grid grid-cols-3 gap-3 sm:gap-4">
-        {stats.map((stat, i) => (
-          <div key={i} className="card p-4 text-center">
-            <stat.icon size={18} className="text-accent mx-auto mb-2" />
-            <p className="text-xl sm:text-2xl font-bold font-heading text-text-primary">{stat.value}</p>
-            <p className="text-[11px] text-text-muted mt-0.5">{stat.label}</p>
-          </div>
-        ))}
+      <div className="card p-4 sm:p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <BarChart3 size={16} className="text-accent" />
+          <span className="text-sm font-bold font-heading text-text-primary">Estadísticas en tiempo real</span>
+          <span className="text-[10px] text-text-muted ml-auto">{stats.total} noticias analizadas</span>
+        </div>
+        <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 sm:gap-3">
+          {items.map((item, i) => (
+            <div key={i} className={`rounded-xl p-3 text-center ${item.bg} border border-white/5`}>
+              {item.icon ? <item.icon size={16} className={`${item.color} mx-auto mb-1.5`} /> : <span className={`text-sm ${item.color} block mb-1`}>{item.emoji}</span>}
+              <p className={`text-lg sm:text-xl font-bold font-heading ${item.color}`}>{item.value}</p>
+              <p className="text-[9px] sm:text-[10px] text-text-muted mt-0.5 leading-tight">{item.label}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   )
@@ -888,7 +902,7 @@ export default function App() {
   })
   const [countryCode, setCountryCode] = useState('ALL')
   const handleCountryChange = (code) => { trackCountryFilter(code); setCountryCode(code) }
-  const { hero, daily, blindspot, feed, flagged, sponsored, allNews, loading, error } = useNewsSections(countryCode)
+  const { hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, loading, error } = useNewsSections(countryCode)
 
   const scrollPosRef = useRef(0)
 
@@ -965,7 +979,7 @@ export default function App() {
         <HeroSection news={hero} onSelectNews={selectNews} />
 
         {/* Stats Bar */}
-        <StatsBar daily={daily} feed={feed} blindspot={blindspot} />
+        <StatsBar stats={stats} />
 
         {/* Resumen Diario */}
         {daily.length > 0 && (

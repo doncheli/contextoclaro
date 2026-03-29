@@ -263,3 +263,26 @@ export async function searchNews(query, maxResults = 20) {
   if (error) throw error
   return data.map(mapNewsRow)
 }
+
+/**
+ * Estadísticas en tiempo real del sitio.
+ */
+export async function fetchSiteStats(countryCode) {
+  let query = supabase.from('news').select('gemini_verdict, bias_label, sponsored_flag, gemini_validated', { count: 'exact', head: false })
+  query = applyCountryFilter(query, countryCode)
+  const { data, error } = await query
+  if (error) return null
+
+  const rows = data || []
+  return {
+    total: rows.length,
+    verified: rows.filter(r => r.gemini_verdict === 'real').length,
+    misleading: rows.filter(r => r.gemini_verdict === 'misleading').length,
+    fake: rows.filter(r => r.gemini_verdict === 'fake').length,
+    sponsored: rows.filter(r => r.sponsored_flag).length,
+    biasLeft: rows.filter(r => r.bias_label === 'IZQUIERDA').length,
+    biasCenter: rows.filter(r => r.bias_label === 'CENTRO' || r.bias_label === 'EQUILIBRADO').length,
+    biasRight: rows.filter(r => r.bias_label === 'DERECHA').length,
+    aiValidated: rows.filter(r => r.gemini_validated).length,
+  }
+}

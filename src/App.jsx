@@ -1839,8 +1839,14 @@ export default function App() {
   const topStoryIds = new Set(topStories.map(n => n.id))
   const heroIds = new Set((hero || []).map(n => n.id))
   const investigations = daily.filter(n => !topStoryIds.has(n.id) && !heroIds.has(n.id)).slice(0, 8)
-  // Trending = noticias con más fuentes (proxy de popularidad)
   const trending = [...allNews].sort((a, b) => (b.sourceCount || 0) - (a.sourceCount || 0)).filter(n => !topStoryIds.has(n.id)).slice(0, 5)
+
+  // Category carousels
+  const byCat = (cat) => allNews.filter(n => (n.category || '').toUpperCase().includes(cat)).slice(0, 10)
+  const politica = byCat('POLÍTICA')
+  const economia = byCat('ECONOMÍA')
+  const tecnologia = byCat('TECNOLOGÍA')
+  const deportes = byCat('DEPORTES')
 
   return (
     <div className="gradient-bg" lang="es">
@@ -1888,6 +1894,59 @@ export default function App() {
             <SectionHeader title="Resumen Diario" subtitle="Las noticias más relevantes de hoy" icon={TrendingUp} onSeeMore={() => { setShowAllNews(true); setVisibleCount(24); window.scrollTo({ top: 0 }) }} />
             <ScrollSection>
               {daily.map(news => (
+                <div key={news.id} className="min-w-[280px] max-w-[300px] shrink-0">
+                  <NewsCard news={news} onSelectNews={selectNews} variant="featured" />
+                </div>
+              ))}
+            </ScrollSection>
+          </section>
+        )}
+
+        {/* Category Carousels */}
+        {politica.length > 0 && (
+          <section className="px-4 sm:px-6 lg:px-8 mt-12">
+            <SectionHeader title="Política" subtitle="Lo último en política de la región" icon={BarChart3} onSeeMore={() => filterByCategory('POLÍTICA')} />
+            <ScrollSection>
+              {politica.map(news => (
+                <div key={news.id} className="min-w-[280px] max-w-[300px] shrink-0">
+                  <NewsCard news={news} onSelectNews={selectNews} variant="featured" />
+                </div>
+              ))}
+            </ScrollSection>
+          </section>
+        )}
+
+        {economia.length > 0 && (
+          <section className="px-4 sm:px-6 lg:px-8 mt-12">
+            <SectionHeader title="Economía" subtitle="Mercados, finanzas y economía regional" icon={TrendingUp} onSeeMore={() => filterByCategory('ECONOMÍA')} />
+            <ScrollSection>
+              {economia.map(news => (
+                <div key={news.id} className="min-w-[280px] max-w-[300px] shrink-0">
+                  <NewsCard news={news} onSelectNews={selectNews} variant="featured" />
+                </div>
+              ))}
+            </ScrollSection>
+          </section>
+        )}
+
+        {tecnologia.length > 0 && (
+          <section className="px-4 sm:px-6 lg:px-8 mt-12">
+            <SectionHeader title="Tecnología" subtitle="Noticias tech del mundo verificadas" icon={Compass} onSeeMore={() => filterByCategory('TECNOLOGÍA')} />
+            <ScrollSection>
+              {tecnologia.map(news => (
+                <div key={news.id} className="min-w-[280px] max-w-[300px] shrink-0">
+                  <NewsCard news={news} onSelectNews={selectNews} variant="featured" />
+                </div>
+              ))}
+            </ScrollSection>
+          </section>
+        )}
+
+        {deportes.length > 0 && (
+          <section className="px-4 sm:px-6 lg:px-8 mt-12">
+            <SectionHeader title="Deportes" subtitle="Cobertura deportiva verificada" icon={Flame} onSeeMore={() => filterByCategory('DEPORTES')} />
+            <ScrollSection>
+              {deportes.map(news => (
                 <div key={news.id} className="min-w-[280px] max-w-[300px] shrink-0">
                   <NewsCard news={news} onSelectNews={selectNews} variant="featured" />
                 </div>

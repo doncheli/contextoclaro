@@ -10,6 +10,9 @@ import ArticleView from './NewsDetailModal'
 import { useNewsSections, useNewsSearch } from './hooks/useNews'
 import { searchNews } from './lib/newsService'
 import AdBanner from './components/AdBanner'
+import CoverageMeter from './components/CoverageMeter'
+import MyConsumptionDashboard from './components/MyConsumption'
+import BlindspotLATAM from './components/BlindspotLATAM'
 import {
   trackCountryFilter, trackSearch, trackSectionView,
   trackFakeNewsAlertView, trackSponsoredAlertView, trackAdImpression, trackShareClick
@@ -361,7 +364,7 @@ function CountryDropdown({ value, onChange }) {
   )
 }
 
-function Header({ onLogoClick, countryCode, onCountryChange, onSelectNews, onSearch, onAboutClick, onCategoryFilter }) {
+function Header({ onLogoClick, countryCode, onCountryChange, onSelectNews, onSearch, onAboutClick, onConsumptionClick, onCategoryFilter }) {
   const { query, setQuery, results, searching } = useNewsSearch()
   const [searchFocused, setSearchFocused] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -385,7 +388,7 @@ function Header({ onLogoClick, countryCode, onCountryChange, onSelectNews, onSea
     { label: 'Tecnología', icon: Compass, onClick: () => onCategoryFilter?.('TECNOLOGÍA') },
     { label: 'Deportes', icon: Flame, onClick: () => onCategoryFilter?.('DEPORTES') },
     { label: 'Verificador', icon: ShieldCheck, onClick: () => onCategoryFilter?.('DESINFORMACIÓN') },
-    { label: 'Acerca de', icon: Newspaper, onClick: onAboutClick },
+    { label: 'Mi Consumo', icon: BarChart3, onClick: onConsumptionClick },
   ]
 
   return (
@@ -665,7 +668,8 @@ function NewsCard({ news, onSelectNews, variant = "default" }) {
           <p className="text-xs text-text-secondary leading-relaxed mb-3 line-clamp-2">
             {news.description}
           </p>
-          <div className="flex items-center justify-between pt-2 border-t border-border">
+          <CoverageMeter sourceCount={news.sourceCount} bias={news.bias} variant="inline" />
+          <div className="flex items-center justify-between pt-2 border-t border-border mt-2">
             <GeminiBadge verdict={news.geminiVerdict} confidence={news.geminiConfidence} />
             <ShareButtons news={news} />
           </div>
@@ -1642,6 +1646,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState(null)
   const [showAbout, setShowAbout] = useState(() => window.location.pathname === '/acerca-de')
   const [showMethodology, setShowMethodology] = useState(() => window.location.pathname === '/metodologia')
+  const [showConsumption, setShowConsumption] = useState(() => window.location.pathname === '/mi-consumo')
   const handleCountryChange = (code) => { trackCountryFilter(code); setCountryCode(code) }
   const { hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, catPolitica, catEconomia, catDeportes, catTecnologia, loading, error } = useNewsSections(countryCode)
   const norm = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
@@ -1703,10 +1708,22 @@ export default function App() {
   const openMethodology = useCallback(() => {
     setShowMethodology(true)
     setShowAbout(false)
+    setShowConsumption(false)
     setSelectedNewsId(null)
     setShowAllNews(false)
     setSearchQuery(null)
     window.history.pushState({ page: 'methodology' }, '', '/metodologia')
+    window.scrollTo({ top: 0 })
+  }, [])
+
+  const openConsumption = useCallback(() => {
+    setShowConsumption(true)
+    setShowAbout(false)
+    setShowMethodology(false)
+    setSelectedNewsId(null)
+    setShowAllNews(false)
+    setSearchQuery(null)
+    window.history.pushState({ page: 'consumption' }, '', '/mi-consumo')
     window.scrollTo({ top: 0 })
   }, [])
 
@@ -1727,6 +1744,7 @@ export default function App() {
     onSelectNews: selectNews,
     onSearch: handleSearch,
     onAboutClick: openAbout,
+    onConsumptionClick: openConsumption,
     onCategoryFilter: filterByCategory,
   }
 
@@ -1735,6 +1753,7 @@ export default function App() {
       const page = event.state?.page
       setShowAbout(page === 'about')
       setShowMethodology(page === 'methodology')
+      setShowConsumption(page === 'consumption')
       setSearchQuery(null)
       if (event.state?.articleId) {
         setSelectedNewsId(event.state.articleId)
@@ -1778,6 +1797,25 @@ export default function App() {
 
   if (showAbout) {
     return <AboutPage onClose={() => { setShowAbout(false); window.history.pushState({}, '', '/') }} headerProps={headerProps} />
+  }
+
+  if (showConsumption) {
+    return (
+      <div className="gradient-bg" lang="es">
+        <Header onLogoClick={() => { setShowConsumption(false); window.history.pushState({}, '', '/') }} {...headerProps} />
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center mb-10">
+            <div className="w-14 h-14 rounded-2xl bg-accent/15 border border-accent/20 flex items-center justify-center mx-auto mb-4">
+              <BarChart3 size={28} className="text-accent" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold font-heading text-text-primary mb-2">Mi Consumo</h1>
+            <p className="text-sm text-text-secondary">Así se ve tu dieta informativa. ¿Estás leyendo de forma equilibrada?</p>
+          </div>
+          <MyConsumptionDashboard />
+        </main>
+        <Footer onAboutClick={openAbout} />
+      </div>
+    )
   }
 
   if (showMethodology) {
@@ -2021,6 +2059,9 @@ export default function App() {
             </div>
           </section>
         )}
+
+        {/* Blindspot LATAM — cross-country coverage gaps */}
+        <BlindspotLATAM onSelectNews={selectNews} />
 
         {/* Ad: before blindspots */}
         <div className="px-4 sm:px-6 lg:px-8">

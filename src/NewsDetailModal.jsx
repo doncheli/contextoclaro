@@ -6,6 +6,9 @@ import {
 } from 'lucide-react'
 import { useArticleDetail } from './hooks/useNews'
 import AdBanner from './components/AdBanner'
+import CoverageMeter from './components/CoverageMeter'
+import { trackRead } from './lib/consumptionTracker'
+import NewsTriptych from './components/NewsTriptych'
 import {
   trackArticleView, trackArticleTimeSpent, trackVerificationView,
   trackSourcesClick, trackReturnToFeed, observeScrollDepth, resetScrollTracking, trackShareClick
@@ -252,6 +255,11 @@ function VerificadorSidebar({ overall, sc, r, circ, offset, bias, sourceCount, o
           </div>
         )}
 
+        {/* Coverage Meter */}
+        <div className="mb-5">
+          <CoverageMeter sourceCount={sourceCount} bias={bias} variant="full" />
+        </div>
+
         {/* Sources button */}
         {sourceCount > 0 && (
           <button
@@ -415,6 +423,11 @@ export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) 
     }
   }, [news?.title, newsId])
 
+  // Track consumption for personal bias dashboard
+  useEffect(() => {
+    if (news) trackRead(news)
+  }, [news?.id])
+
   // Track article view + scroll depth + time spent
   useEffect(() => {
     if (!news) return
@@ -567,6 +580,9 @@ export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) 
           <AdBanner variant="sidebar" />
           </div>
         </div>
+
+        {/* News Triptych — perspective comparison */}
+        <NewsTriptych sources={detail.sources} />
 
         {/* Regional Context */}
         <RegionalContext

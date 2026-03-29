@@ -1848,8 +1848,8 @@ export default function App() {
       <BreakingNewsBanner flagged={flagged} onSelectNews={selectNews} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
-        <p className="text-sm sm:text-base font-heading font-semibold text-text-secondary tracking-wide">
-          Filtramos el ruido. <span className="text-accent-light">Entregamos la verdad.</span>
+        <p className="text-sm sm:text-base font-heading font-semibold tracking-wide">
+          <span className="text-accent">Filtramos el ruido.</span> <span className="text-accent-light">Entregamos la verdad.</span>
         </p>
       </div>
 

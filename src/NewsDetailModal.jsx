@@ -17,7 +17,7 @@ function NewsImage({ src, alt, className = "", news }) {
   const fallback = news ? getFallbackImage(news) : null
 
   if ((!src || failed) && fallback) {
-    return <img src={fallback} alt={alt} className={className} loading="lazy" />
+    return <img src={fallback} alt={alt} className={className} loading="lazy" decoding="async" />
   }
 
   if (!src || failed) {

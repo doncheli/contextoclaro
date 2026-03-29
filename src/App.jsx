@@ -116,7 +116,7 @@ function SectionHeader({ title, subtitle, icon: Icon, onSeeMore }) {
   )
 }
 
-function NewsImage({ src, alt, className = "", news }) {
+function NewsImage({ src, alt, className = "", news, priority = false }) {
   const [failed, setFailed] = useState(false)
   const fallback = news ? getFallbackImage(news) : null
 
@@ -127,6 +127,8 @@ function NewsImage({ src, alt, className = "", news }) {
         alt={alt}
         className={className}
         loading="lazy"
+        decoding="async"
+        fetchPriority="low"
       />
     )
   }
@@ -145,6 +147,9 @@ function NewsImage({ src, alt, className = "", news }) {
       src={src}
       alt={alt}
       className={className}
+      loading={priority ? "eager" : "lazy"}
+      decoding="async"
+      fetchPriority={priority ? "high" : "auto"}
       onError={() => setFailed(true)}
       loading="lazy"
     />
@@ -381,7 +386,7 @@ function HeroSection({ news: heroNews, onSelectNews }) {
                     key={slide.id}
                     className={`absolute inset-0 transition-opacity duration-700 ${i === active ? 'opacity-100' : 'opacity-0'}`}
                   >
-                    <NewsImage src={slide.image} alt={slide.title} news={slide} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" />
+                    <NewsImage src={slide.image} alt={slide.title} news={slide} priority={i === 0} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" />
                   </div>
                 ))}
               </div>

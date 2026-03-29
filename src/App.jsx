@@ -382,9 +382,10 @@ function Header({ onLogoClick, countryCode, onCountryChange, onSelectNews, onSea
   const navItems = [
     { label: 'Política', icon: BarChart3, onClick: () => onCategoryFilter?.('POLÍTICA') },
     { label: 'Economía', icon: TrendingUp, onClick: () => onCategoryFilter?.('ECONOMÍA') },
+    { label: 'Tecnología', icon: Compass, onClick: () => onCategoryFilter?.('TECNOLOGÍA') },
     { label: 'Deportes', icon: Flame, onClick: () => onCategoryFilter?.('DEPORTES') },
     { label: 'Verificador', icon: ShieldCheck, onClick: () => onCategoryFilter?.('DESINFORMACIÓN') },
-    { label: 'Acerca de', icon: Compass, onClick: onAboutClick },
+    { label: 'Acerca de', icon: Newspaper, onClick: onAboutClick },
   ]
 
   return (
@@ -1028,7 +1029,7 @@ function Footer({ onAboutClick }) {
     { title: 'Explorar', links: [
       { label: 'Política', href: '#' },
       { label: 'Economía', href: '#' },
-      { label: 'Seguridad', href: '#' },
+      { label: 'Tecnología', href: '#' },
       { label: 'Deportes', href: '#' },
     ]},
     { title: 'Verificación', links: [

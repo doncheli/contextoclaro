@@ -7,6 +7,7 @@ import {
   fetchFlaggedNews,
   fetchSponsoredNews,
   fetchAllNews,
+  fetchNewsByCategory,
   fetchArticleDetail,
   searchNews,
   fetchSiteStats,
@@ -32,7 +33,7 @@ export function useNewsSections(countryCode = 'ALL') {
 
   const loadData = useCallback(async () => {
     try {
-      const [hero, daily, blindspot, feed, flagged, sponsored, allNews, stats] = await Promise.all([
+      const [hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, catPolitica, catEconomia, catDeportes, catTecnologia] = await Promise.all([
         fetchHeroNews(countryCode),
         fetchDailyNews(countryCode),
         fetchBlindspotNews(countryCode),
@@ -41,6 +42,10 @@ export function useNewsSections(countryCode = 'ALL') {
         fetchSponsoredNews(countryCode),
         fetchAllNews(countryCode),
         fetchSiteStats(countryCode),
+        fetchNewsByCategory('olític', countryCode),
+        fetchNewsByCategory('conomí', countryCode),
+        fetchNewsByCategory('eporte', countryCode),
+        fetchNewsByCategory('ecnolog', countryCode),
       ])
 
       if (!mountedRef.current) return
@@ -56,6 +61,10 @@ export function useNewsSections(countryCode = 'ALL') {
         sponsored,
         allNews,
         stats,
+        catPolitica,
+        catEconomia,
+        catDeportes,
+        catTecnologia,
       })
       setError(null)
     } catch (err) {

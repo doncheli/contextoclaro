@@ -206,6 +206,21 @@ export async function fetchAllNews(countryCode) {
   return data.map(mapNewsRow)
 }
 
+export async function fetchNewsByCategory(pattern, countryCode, limit = 12) {
+  let query = supabase
+    .from('news')
+    .select('*, news_sources(*)')
+    .ilike('category', `%${pattern}%`)
+    .order('published_at', { ascending: false })
+    .limit(limit)
+
+  query = applyCountryFilter(query, countryCode)
+
+  const { data, error } = await query
+  if (error) return []
+  return data.map(mapNewsRow)
+}
+
 /**
  * Obtiene el detalle completo de un artículo (párrafos + fuentes + scores).
  */

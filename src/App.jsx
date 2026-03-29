@@ -1643,7 +1643,7 @@ export default function App() {
   const [showAbout, setShowAbout] = useState(() => window.location.pathname === '/acerca-de')
   const [showMethodology, setShowMethodology] = useState(() => window.location.pathname === '/metodologia')
   const handleCountryChange = (code) => { trackCountryFilter(code); setCountryCode(code) }
-  const { hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, loading, error } = useNewsSections(countryCode)
+  const { hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, catPolitica, catEconomia, catDeportes, catTecnologia, loading, error } = useNewsSections(countryCode)
   const norm = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
 
   const scrollPosRef = useRef(0)
@@ -1843,15 +1843,11 @@ export default function App() {
   const investigations = daily.filter(n => !topStoryIds.has(n.id) && !heroIds.has(n.id)).slice(0, 8)
   const trending = [...allNews].sort((a, b) => (b.sourceCount || 0) - (a.sourceCount || 0)).filter(n => !topStoryIds.has(n.id)).slice(0, 5)
 
-  // Category carousels — match against multiple related category keywords
-  const byCats = (keywords) => allNews.filter(n => {
-    const cat = norm(n.category || '')
-    return keywords.some(k => cat.includes(k))
-  }).slice(0, 12)
-  const politica = byCats(['POLITICA', 'POLITICO', 'OPINION', 'NACIONAL'])
-  const economia = byCats(['ECONOMIA', 'MERCADO', 'FINANZA', 'NEGOCIOS'])
-  const tecnologia = byCats(['TECNOLOGIA', 'TECH', 'CIENCIA'])
-  const deportes = byCats(['DEPORTE'])
+  // Category data comes from dedicated DB queries (not filtered from allNews)
+  const politica = catPolitica || []
+  const economia = catEconomia || []
+  const tecnologia = catTecnologia || []
+  const deportes = catDeportes || []
 
   return (
     <div className="gradient-bg" lang="es">

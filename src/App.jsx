@@ -3,22 +3,103 @@ import {
   Search, Eye, CheckCircle, AlertOctagon,
   ChevronRight, User as UserIcon, ChevronDown,
   ShieldCheck, ShieldAlert, ShieldX, ShieldQuestion,
-  Menu, X, TrendingUp, BarChart3, Compass, Newspaper, AlertTriangle, DollarSign, Megaphone
+  Menu, X, TrendingUp, BarChart3, Compass, Newspaper, AlertTriangle, DollarSign, Megaphone,
+  Share2, Clock, ExternalLink, Copy, MessageCircle, Flame
 } from 'lucide-react'
 import ArticleView from './NewsDetailModal'
 import { useNewsSections, useNewsSearch } from './hooks/useNews'
 import AdBanner from './components/AdBanner'
 import {
   trackCountryFilter, trackSearch, trackSectionView,
-  trackFakeNewsAlertView, trackSponsoredAlertView, trackAdImpression
+  trackFakeNewsAlertView, trackSponsoredAlertView, trackAdImpression, trackShareClick
 } from './lib/analytics'
 import { getFallbackImage } from './lib/categoryImages'
+
+/* ═══════════════ HELPERS ═══════════════ */
+
+function timeAgo(dateStr) {
+  if (!dateStr) return ''
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'Ahora'
+  if (mins < 60) return `Hace ${mins} min`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `Hace ${hours}h`
+  const days = Math.floor(hours / 24)
+  if (days === 1) return 'Ayer'
+  if (days < 7) return `Hace ${days} días`
+  return new Date(dateStr).toLocaleDateString('es', { day: 'numeric', month: 'short' })
+}
+
+function readTime(news) {
+  const words = (news.description || '').split(' ').length + (news.sourceCount || 1) * 50
+  const mins = Math.max(1, Math.round(words / 200))
+  return `${mins} min`
+}
+
+function reliabilityLabel(score) {
+  if (score >= 8) return { label: 'Muy fiable', color: 'bg-success text-white' }
+  if (score >= 6) return { label: 'Fiable', color: 'bg-accent text-white' }
+  if (score >= 4) return { label: 'Precaución', color: 'bg-warning text-white' }
+  return { label: 'No fiable', color: 'bg-danger text-white' }
+}
+
+const CATEGORIES = [
+  { key: 'ALL', label: 'Todas' },
+  { key: 'POLÍTICA', label: 'Política' },
+  { key: 'ECONOMÍA', label: 'Economía' },
+  { key: 'SEGURIDAD', label: 'Seguridad' },
+  { key: 'DEPORTES', label: 'Deportes' },
+  { key: 'TECNOLOGÍA', label: 'Tecnología' },
+  { key: 'SALUD', label: 'Salud' },
+  { key: 'DESINFORMACIÓN', label: 'Fake News' },
+]
 
 const COUNTRIES = [
   { code: 'ALL', name: 'Todos los países', emoji: '🌎' },
   { code: 'VE', name: 'Venezuela', emoji: '🇻🇪' },
   { code: 'CO', name: 'Colombia', emoji: '🇨🇴' },
 ]
+
+/* ═══════════════ SHARE BUTTONS ═══════════════ */
+
+function ShareButtons({ news, size = 'sm' }) {
+  const [copied, setCopied] = useState(false)
+  const url = `https://contextoclaro.com/?article=${news.id}`
+  const text = encodeURIComponent(news.title)
+
+  const share = (method, link) => {
+    trackShareClick(news.id, method)
+    window.open(link, '_blank', 'width=600,height=400')
+  }
+
+  const copyLink = (e) => {
+    e.stopPropagation()
+    navigator.clipboard.writeText(url)
+    setCopied(true)
+    trackShareClick(news.id, 'copy_link')
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const iconSize = size === 'sm' ? 12 : 14
+  const btnClass = size === 'sm'
+    ? 'w-6 h-6 rounded-md text-text-muted hover:text-accent hover:bg-accent/10'
+    : 'w-8 h-8 rounded-lg text-text-muted hover:text-accent hover:bg-accent/10'
+
+  return (
+    <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+      <button onClick={(e) => { e.stopPropagation(); share('whatsapp', `https://wa.me/?text=${text}%20${encodeURIComponent(url)}`) }} className={`${btnClass} flex items-center justify-center transition-colors`} title="WhatsApp">
+        <MessageCircle size={iconSize} />
+      </button>
+      <button onClick={(e) => { e.stopPropagation(); share('twitter', `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`) }} className={`${btnClass} flex items-center justify-center transition-colors`} title="X (Twitter)">
+        <ExternalLink size={iconSize} />
+      </button>
+      <button onClick={copyLink} className={`${btnClass} flex items-center justify-center transition-colors`} title={copied ? '¡Copiado!' : 'Copiar link'}>
+        {copied ? <CheckCircle size={iconSize} className="text-success" /> : <Copy size={iconSize} />}
+      </button>
+    </div>
+  )
+}
 
 /* ═══════════════ SHARED COMPONENTS ═══════════════ */
 
@@ -479,6 +560,7 @@ function NewsCard({ news, onSelectNews, variant = "default" }) {
   const fakeRing = isFake ? 'ring-2 ring-danger/50' : ''
 
   if (variant === "featured") {
+    const rl = reliabilityLabel(score)
     return (
       <article
         className={`card overflow-hidden cursor-pointer group ${fakeRing}`}
@@ -489,7 +571,7 @@ function NewsCard({ news, onSelectNews, variant = "default" }) {
           <NewsImage src={news.image} alt={news.title} news={news} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" />
           <div className="absolute inset-0 img-overlay" />
           <div className="absolute top-3 right-3">
-            <ScoreBadge score={score} size="sm" />
+            <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold ${rl.color}`}>{rl.label}</span>
           </div>
           <div className="absolute bottom-3 left-3">
             <VerifiedPill veracity={news.veracity} />
@@ -499,8 +581,9 @@ function NewsCard({ news, onSelectNews, variant = "default" }) {
           <div className="flex items-center gap-2 mb-2">
             <span className="text-base">{news.country}</span>
             <span className="text-[11px] text-text-muted bg-surface px-1.5 py-0.5 rounded font-medium">
-              {news.category?.split(' · ')[0] || news.category}
+              {news.sourceLabel || news.category?.split(' · ')[0]}
             </span>
+            <span className="text-[10px] text-text-muted ml-auto flex items-center gap-1"><Clock size={10} />{timeAgo(news.publishedAt)}</span>
           </div>
           <h3 className="font-bold text-sm leading-snug mb-2 line-clamp-2 font-heading group-hover:text-accent-light transition-colors">
             {news.title}
@@ -509,10 +592,8 @@ function NewsCard({ news, onSelectNews, variant = "default" }) {
             {news.description}
           </p>
           <div className="flex items-center justify-between pt-2 border-t border-border">
-            <div className="flex items-center gap-2">
-              <GeminiBadge verdict={news.geminiVerdict} confidence={news.geminiConfidence} />
-            </div>
-            <span className="text-[11px] text-text-muted">{news.sourceCount ? `${news.sourceCount} fuentes` : ''}</span>
+            <GeminiBadge verdict={news.geminiVerdict} confidence={news.geminiConfidence} />
+            <ShareButtons news={news} />
           </div>
         </div>
       </article>
@@ -520,6 +601,7 @@ function NewsCard({ news, onSelectNews, variant = "default" }) {
   }
 
   if (variant === "compact") {
+    const rl = reliabilityLabel(score)
     return (
       <article
         className={`card overflow-hidden cursor-pointer group ${fakeRing}`}
@@ -529,16 +611,25 @@ function NewsCard({ news, onSelectNews, variant = "default" }) {
         <div className="relative h-36 overflow-hidden">
           <NewsImage src={news.image} alt={news.title} news={news} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" />
           <div className="absolute top-2 right-2">
-            <ScoreBadge score={score} size="sm" />
+            <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold ${rl.color}`}>{rl.label}</span>
+          </div>
+          <div className="absolute bottom-2 left-2 flex items-center gap-1.5">
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-base/70 text-text-primary backdrop-blur-sm">
+              {news.sourceLabel || news.category?.split(' · ')[0]}
+            </span>
           </div>
         </div>
         <div className="p-3.5">
-          <h3 className="font-bold text-sm leading-snug mb-2 line-clamp-3 font-heading group-hover:text-accent-light transition-colors">
+          <h3 className="font-bold text-sm leading-snug mb-2 line-clamp-2 font-heading group-hover:text-accent-light transition-colors">
             {news.title}
           </h3>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[10px] text-text-muted flex items-center gap-1"><Clock size={10} />{timeAgo(news.publishedAt)}</span>
+            <span className="text-[10px] text-text-muted">· {readTime(news)} lectura</span>
+          </div>
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-text-muted">{news.sourceCount ? `${news.sourceCount} fuentes` : ''}</span>
             <GeminiBadge verdict={news.geminiVerdict} confidence={news.geminiConfidence} />
+            <ShareButtons news={news} />
           </div>
         </div>
       </article>
@@ -903,6 +994,7 @@ export default function App() {
   const [countryCode, setCountryCode] = useState('ALL')
   const [showAllNews, setShowAllNews] = useState(false)
   const [visibleCount, setVisibleCount] = useState(24)
+  const [categoryFilter, setCategoryFilter] = useState('ALL')
   const handleCountryChange = (code) => { trackCountryFilter(code); setCountryCode(code) }
   const { hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, loading, error } = useNewsSections(countryCode)
 
@@ -977,34 +1069,44 @@ export default function App() {
 
   if (showAllNews) {
     const sorted = [...allNews].sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0))
-    const visible = sorted.slice(0, visibleCount)
+    const filtered = categoryFilter === 'ALL' ? sorted : sorted.filter(n => (n.category || '').toUpperCase().includes(categoryFilter))
+    const visible = filtered.slice(0, visibleCount)
     return (
       <div className="gradient-bg" lang="es">
         <Header onLogoClick={() => { setShowAllNews(false); setVisibleCount(24) }} countryCode={countryCode} onCountryChange={handleCountryChange} />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <button onClick={() => { setShowAllNews(false); setVisibleCount(24) }} className="text-text-secondary hover:text-accent transition-colors">
+              <button onClick={() => { setShowAllNews(false); setVisibleCount(24); setCategoryFilter('ALL') }} className="text-text-secondary hover:text-accent transition-colors">
                 <ChevronRight size={20} className="rotate-180" />
               </button>
               <div>
                 <h1 className="text-xl font-bold font-heading">Todas las Noticias</h1>
-                <p className="text-xs text-text-muted">{sorted.length} noticias · Ordenadas por fecha</p>
+                <p className="text-xs text-text-muted">{filtered.length} noticias · Ordenadas por fecha</p>
               </div>
             </div>
+          </div>
+          {/* Category filters */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {CATEGORIES.map(cat => (
+              <button key={cat.key} onClick={() => { setCategoryFilter(cat.key); setVisibleCount(24) }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${categoryFilter === cat.key ? 'bg-accent text-white' : 'bg-surface border border-border text-text-secondary hover:border-accent/50'}`}>
+                {cat.label}
+              </button>
+            ))}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {visible.map(news => (
               <NewsCard key={news.id} news={news} onSelectNews={selectNews} variant="compact" />
             ))}
           </div>
-          {visibleCount < sorted.length && (
+          {visibleCount < filtered.length && (
             <div className="flex justify-center mt-8">
               <button
                 onClick={() => setVisibleCount(prev => prev + 24)}
                 className="px-8 py-3 rounded-xl bg-accent text-white font-semibold hover:bg-accent/90 transition-colors"
               >
-                Cargar más noticias ({sorted.length - visibleCount} restantes)
+                Cargar más noticias ({filtered.length - visibleCount} restantes)
               </button>
             </div>
           )}
@@ -1015,7 +1117,11 @@ export default function App() {
   }
 
   const topStories = feed.slice(0, 12)
-  const investigations = [...daily, ...feed].filter((n, i, arr) => arr.findIndex(x => x.id === n.id) === i).slice(0, 8)
+  const topStoryIds = new Set(topStories.map(n => n.id))
+  const heroIds = new Set((hero || []).map(n => n.id))
+  const investigations = daily.filter(n => !topStoryIds.has(n.id) && !heroIds.has(n.id)).slice(0, 8)
+  // Trending = noticias con más fuentes (proxy de popularidad)
+  const trending = [...allNews].sort((a, b) => (b.sourceCount || 0) - (a.sourceCount || 0)).filter(n => !topStoryIds.has(n.id)).slice(0, 5)
 
   return (
     <div className="gradient-bg" lang="es">
@@ -1028,6 +1134,27 @@ export default function App() {
 
         {/* Stats Bar */}
         <StatsBar stats={stats} />
+
+        {/* Trending / Lo más cubierto */}
+        {trending.length > 0 && (
+          <section className="px-4 sm:px-6 lg:px-8 mt-10">
+            <SectionHeader title="Tendencias" subtitle="Lo más cubierto por múltiples fuentes" icon={Flame} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              {trending.map((news, i) => (
+                <article key={news.id} className="card p-3 cursor-pointer group hover:border-accent/30 transition-colors flex items-start gap-3" onClick={() => selectNews(news.id)}>
+                  <span className="text-xl font-black text-accent/30 font-heading shrink-0">{i + 1}</span>
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-semibold leading-snug line-clamp-2 group-hover:text-accent-light transition-colors">{news.title}</h4>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span className="text-[9px] text-text-muted">{news.sourceLabel}</span>
+                      <span className="text-[9px] text-text-muted">· {timeAgo(news.publishedAt)}</span>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Resumen Diario */}
         {daily.length > 0 && (

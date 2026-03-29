@@ -898,7 +898,7 @@ function GridSection({ children }) {
 
 /* ═══════════════ METHODOLOGY BANNER ═══════════════ */
 
-function MethodologyBanner() {
+function MethodologyBanner({ onMethodologyClick }) {
   return (
     <section className="px-4 sm:px-6 lg:px-8 mt-10">
       <div className="methodology-banner rounded-2xl p-6 sm:p-8 border border-accent/20 overflow-hidden relative">
@@ -941,7 +941,7 @@ function MethodologyBanner() {
           </div>
 
           {/* CTA */}
-          <button className="shrink-0 px-5 py-2.5 rounded-xl bg-accent text-white text-sm font-bold hover:bg-accent-light transition-colors shadow-lg shadow-accent/20">
+          <button onClick={onMethodologyClick} className="shrink-0 px-5 py-2.5 rounded-xl bg-accent text-white text-sm font-bold hover:bg-accent-light transition-colors shadow-lg shadow-accent/20">
             Conocer más
           </button>
         </div>
@@ -1102,6 +1102,288 @@ function Footer({ onAboutClick }) {
         </div>
       </div>
     </footer>
+  )
+}
+
+/* ═══════════════ METHODOLOGY PAGE ═══════════════ */
+
+function FlowArrow() {
+  return (
+    <div className="flex justify-center py-3">
+      <svg width="24" height="32" viewBox="0 0 24 32" fill="none">
+        <path d="M12 0V24M12 24L4 16M12 24L20 16" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    </div>
+  )
+}
+
+function FlowStep({ number, title, description, icon, color, details }) {
+  const colors = {
+    blue: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', badge: 'bg-blue-600' },
+    green: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', badge: 'bg-green-600' },
+    amber: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', badge: 'bg-amber-600' },
+    red: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', badge: 'bg-red-600' },
+    purple: { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700', badge: 'bg-purple-600' },
+  }
+  const c = colors[color] || colors.blue
+  return (
+    <div className={`${c.bg} ${c.border} border-2 rounded-2xl p-6 sm:p-8 relative`}>
+      <div className="flex items-start gap-4">
+        <div className={`${c.badge} text-white w-10 h-10 rounded-xl flex items-center justify-center text-lg font-black shrink-0`}>
+          {number}
+        </div>
+        <div className="flex-1">
+          <h3 className={`text-lg font-bold font-heading ${c.text} mb-2`}>{title}</h3>
+          <p className="text-sm text-text-secondary leading-relaxed mb-4">{description}</p>
+          {details && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {details.map((d, i) => (
+                <div key={i} className="flex items-start gap-2 bg-white/70 rounded-lg p-3 border border-white">
+                  <span className="text-lg">{d.icon}</span>
+                  <div>
+                    <span className="text-xs font-bold text-text-primary block">{d.label}</span>
+                    <span className="text-xs text-text-muted">{d.desc}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ScoreExplainer({ label, score, color, desc }) {
+  const barColor = color === 'green' ? 'bg-green-500' : color === 'blue' ? 'bg-blue-500' : color === 'amber' ? 'bg-amber-500' : 'bg-purple-500'
+  return (
+    <div className="card p-5 border border-border">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-bold text-text-primary">{label}</span>
+        <span className={`text-sm font-black ${color === 'green' ? 'text-green-600' : color === 'blue' ? 'text-blue-600' : color === 'amber' ? 'text-amber-600' : 'text-purple-600'}`}>{score}%</span>
+      </div>
+      <div className="h-2.5 rounded-full bg-gray-200 overflow-hidden mb-3">
+        <div className={`h-full rounded-full ${barColor}`} style={{ width: `${score}%` }} />
+      </div>
+      <p className="text-xs text-text-muted leading-relaxed">{desc}</p>
+    </div>
+  )
+}
+
+function MethodologyPage({ onClose, headerProps, openAbout }) {
+  return (
+    <div className="gradient-bg" lang="es">
+      <Header onLogoClick={onClose} {...headerProps} />
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+        {/* Hero */}
+        <div className="text-center mb-16">
+          <div className="w-16 h-16 rounded-2xl bg-accent/15 border border-accent/20 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-accent/10">
+            <ShieldCheck size={32} className="text-accent" />
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold font-heading text-text-primary mb-4">
+            Nuestra metodolog&iacute;a
+          </h1>
+          <p className="text-lg text-text-secondary max-w-2xl mx-auto leading-relaxed">
+            As&iacute; es como analizamos cada noticia que llega a Contexto Claro.
+            Todo el proceso es autom&aacute;tico, transparente y dise&ntilde;ado para que
+            t&uacute; tengas la informaci&oacute;n m&aacute;s completa posible.
+          </p>
+        </div>
+
+        {/* Visual Flow Diagram */}
+        <section className="mb-16">
+          <h2 className="text-2xl font-bold font-heading mb-2 text-text-primary text-center">El recorrido de cada noticia</h2>
+          <p className="text-sm text-text-muted text-center mb-10">Desde que se publica hasta que llega a ti, verificada</p>
+
+          <div className="max-w-2xl mx-auto">
+            <FlowStep
+              number="1"
+              color="blue"
+              title="Recopilaci&oacute;n autom&aacute;tica"
+              description="Nuestro sistema monitorea en tiempo real cientos de medios de comunicaci&oacute;n de toda Latinoam&eacute;rica. Cada vez que se publica una noticia relevante, la capturamos autom&aacute;ticamente."
+              details={[
+                { icon: '📡', label: 'Monitoreo 24/7', desc: 'Rastreamos medios de Venezuela, Colombia, M\u00e9xico, Argentina, Chile y m\u00e1s' },
+                { icon: '🗞️', label: 'Todas las categor\u00edas', desc: 'Pol\u00edtica, econom\u00eda, seguridad, deportes, tecnolog\u00eda' },
+                { icon: '🌐', label: 'M\u00faltiples fuentes', desc: 'No dependemos de un solo medio — capturamos la mayor cantidad posible' },
+                { icon: '⚡', label: 'En tiempo real', desc: 'Las noticias aparecen minutos despu\u00e9s de ser publicadas' },
+              ]}
+            />
+
+            <FlowArrow />
+
+            <FlowStep
+              number="2"
+              color="green"
+              title="An&aacute;lisis con Inteligencia Artificial"
+              description="Cada noticia pasa por nuestro motor de IA que la analiza desde m&uacute;ltiples &aacute;ngulos. No es una simple b&uacute;squeda de palabras clave — es un an&aacute;lisis profundo del contenido."
+              details={[
+                { icon: '🧠', label: 'Comprensi\u00f3n del texto', desc: 'La IA lee y entiende el contexto completo de la noticia' },
+                { icon: '🔍', label: 'Detecci\u00f3n de patrones', desc: 'Identifica lenguaje manipulador, exageraciones y omisiones' },
+                { icon: '📊', label: 'Cruce de datos', desc: 'Compara la informaci\u00f3n con datos verificados y fuentes oficiales' },
+                { icon: '🎯', label: 'An\u00e1lisis de tono', desc: 'Detecta si el tono es informativo, sensacionalista o propagand\u00edstico' },
+              ]}
+            />
+
+            <FlowArrow />
+
+            <FlowStep
+              number="3"
+              color="amber"
+              title="Verificaci&oacute;n y clasificaci&oacute;n"
+              description="Basado en el an&aacute;lisis, la IA clasifica cada noticia en una de tres categor&iacute;as. Adem&aacute;s, asigna un porcentaje de confianza para que sepas qu&eacute; tan segura est&aacute; la IA de su veredicto."
+            />
+
+            {/* Verdict cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 mb-4">
+              <div className="rounded-xl p-4 bg-green-50 border-2 border-green-200 text-center">
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-2">
+                  <ShieldCheck size={20} className="text-green-600" />
+                </div>
+                <span className="text-sm font-black text-green-700 block">REAL</span>
+                <p className="text-xs text-green-600 mt-1">La informaci&oacute;n es coherente y verificable</p>
+              </div>
+              <div className="rounded-xl p-4 bg-amber-50 border-2 border-amber-200 text-center">
+                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-2">
+                  <ShieldAlert size={20} className="text-amber-600" />
+                </div>
+                <span className="text-sm font-black text-amber-700 block">ENGA&Ntilde;OSA</span>
+                <p className="text-xs text-amber-600 mt-1">Contiene informaci&oacute;n parcial o manipulada</p>
+              </div>
+              <div className="rounded-xl p-4 bg-red-50 border-2 border-red-200 text-center">
+                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-2">
+                  <ShieldX size={20} className="text-red-600" />
+                </div>
+                <span className="text-sm font-black text-red-700 block">FALSA</span>
+                <p className="text-xs text-red-600 mt-1">La informaci&oacute;n es falsa o fabricada</p>
+              </div>
+            </div>
+
+            <FlowArrow />
+
+            <FlowStep
+              number="4"
+              color="purple"
+              title="Puntuaci&oacute;n de confiabilidad"
+              description="Adem&aacute;s de la clasificaci&oacute;n, cada noticia recibe una puntuaci&oacute;n del 0 al 100 basada en cuatro m&eacute;tricas clave. Esta puntuaci&oacute;n te dice qu&eacute; tan confiable es la noticia en general."
+            />
+
+            {/* Score breakdown */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 mb-4">
+              <ScoreExplainer label="Precisi&oacute;n factual" score={85} color="green" desc="&iquest;La informaci&oacute;n presentada es precisa y verificable? Se compara con datos oficiales y fuentes comprobables." />
+              <ScoreExplainer label="Diversidad de fuentes" score={70} color="blue" desc="&iquest;Cu&aacute;ntos medios diferentes cubren esta noticia? M&aacute;s fuentes = mayor confiabilidad." />
+              <ScoreExplainer label="Transparencia" score={75} color="amber" desc="&iquest;La fuente identifica al autor, cita fuentes y separa opini&oacute;n de informaci&oacute;n?" />
+              <ScoreExplainer label="Independencia" score={60} color="purple" desc="&iquest;La cobertura es equilibrada o favorece una postura pol&iacute;tica o comercial espec&iacute;fica?" />
+            </div>
+
+            {/* Score formula visual */}
+            <div className="card p-6 border border-border mt-4 mb-4">
+              <h4 className="text-sm font-bold text-text-primary mb-4 text-center">C&oacute;mo se calcula la puntuaci&oacute;n final</h4>
+              <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-mono">
+                <span className="px-3 py-2 rounded-lg bg-green-50 border border-green-200 text-green-700 font-bold">Factual &times; 35%</span>
+                <span className="text-text-muted font-bold">+</span>
+                <span className="px-3 py-2 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 font-bold">Fuentes &times; 25%</span>
+                <span className="text-text-muted font-bold">+</span>
+                <span className="px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 font-bold">Transparencia &times; 25%</span>
+                <span className="text-text-muted font-bold">+</span>
+                <span className="px-3 py-2 rounded-lg bg-purple-50 border border-purple-200 text-purple-700 font-bold">Independencia &times; 15%</span>
+                <span className="text-text-muted font-bold">=</span>
+                <span className="px-4 py-2 rounded-lg bg-accent text-white font-black text-sm">Puntuaci&oacute;n</span>
+              </div>
+            </div>
+
+            <FlowArrow />
+
+            <FlowStep
+              number="5"
+              color="red"
+              title="Detecci&oacute;n de sesgo pol&iacute;tico"
+              description="Analizamos la orientaci&oacute;n pol&iacute;tica de las fuentes que cubren cada noticia. No es que un sesgo sea &laquo;malo&raquo; — pero t&uacute; mereces saber desde qu&eacute; perspectiva te est&aacute;n informando."
+            />
+
+            {/* Bias visual */}
+            <div className="card p-6 border border-border mt-4 mb-4">
+              <h4 className="text-sm font-bold text-text-primary mb-4 text-center">Espectro de sesgo pol&iacute;tico</h4>
+              <div className="max-w-sm mx-auto">
+                <div className="flex h-5 rounded-full overflow-hidden border border-gray-300 mb-3">
+                  <div className="bg-red-600" style={{ width: '30%' }} />
+                  <div className="bg-white border-x border-gray-200" style={{ width: '40%' }} />
+                  <div className="bg-[#1e3a5f]" style={{ width: '30%' }} />
+                </div>
+                <div className="flex justify-between text-xs font-semibold">
+                  <span className="text-red-600">Izquierda</span>
+                  <span className="text-gray-500">Centro</span>
+                  <span className="text-[#1e3a5f]">Derecha</span>
+                </div>
+              </div>
+              <p className="text-xs text-text-muted text-center mt-4 max-w-md mx-auto">
+                Cada noticia muestra qu&eacute; porcentaje de fuentes de izquierda, centro y derecha la cubren.
+                Un balance m&aacute;s equilibrado indica cobertura m&aacute;s diversa.
+              </p>
+            </div>
+
+            <FlowArrow />
+
+            <FlowStep
+              number="6"
+              color="blue"
+              title="T&uacute; decides"
+              description="Con toda esta informaci&oacute;n — verificaci&oacute;n de IA, puntuaci&oacute;n de confiabilidad, desglose de m&eacute;tricas y espectro de sesgo — t&uacute; tienes todo lo que necesitas para formarte tu propia opini&oacute;n. No te decimos qu&eacute; pensar. Te damos el contexto para que pienses por ti mismo."
+            />
+          </div>
+        </section>
+
+        {/* Score ranges */}
+        <section className="mb-16">
+          <h2 className="text-2xl font-bold font-heading mb-8 text-text-primary text-center">&iquest;Qu&eacute; significa cada puntuaci&oacute;n?</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { range: '85 – 100', label: 'Muy fiable', color: 'bg-green-500', bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', desc: 'Informaci\u00f3n verificada, m\u00faltiples fuentes, transparencia alta' },
+              { range: '70 – 84', label: 'Fiable', color: 'bg-blue-500', bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', desc: 'Informaci\u00f3n generalmente precisa, buena diversidad de fuentes' },
+              { range: '50 – 69', label: 'Precauci\u00f3n', color: 'bg-amber-500', bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', desc: 'Informaci\u00f3n parcial, pocas fuentes o sesgo notable' },
+              { range: '0 – 49', label: 'No fiable', color: 'bg-red-500', bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', desc: 'Informaci\u00f3n probablemente falsa, manipulada o sin verificar' },
+            ].map((item, i) => (
+              <div key={i} className={`${item.bg} ${item.border} border-2 rounded-xl p-5 text-center`}>
+                <div className={`w-14 h-14 rounded-full ${item.color} flex items-center justify-center mx-auto mb-3`}>
+                  <span className="text-white text-sm font-black">{item.range.split(' ')[0]}</span>
+                </div>
+                <span className={`text-sm font-black ${item.text} block mb-1`}>{item.label}</span>
+                <span className="text-xs text-text-secondary block mb-2">{item.range} puntos</span>
+                <p className="text-xs text-text-muted">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="mb-16">
+          <h2 className="text-2xl font-bold font-heading mb-8 text-text-primary text-center">Preguntas frecuentes</h2>
+          <div className="space-y-4 max-w-2xl mx-auto">
+            {[
+              { q: '\u00bfLa IA puede equivocarse?', a: 'S\u00ed. Ning\u00fan sistema es perfecto. Por eso mostramos el porcentaje de confianza de cada veredicto y todas las m\u00e9tricas del an\u00e1lisis, para que t\u00fa puedas juzgar por tu cuenta.' },
+              { q: '\u00bfQui\u00e9n controla la IA?', a: 'Nadie la "controla" editorialmente. El c\u00f3digo es open source y cualquier persona puede auditarlo en GitHub. No hay intervenci\u00f3n humana en las clasificaciones.' },
+              { q: '\u00bfPor qu\u00e9 una noticia tiene puntuaci\u00f3n baja?', a: 'Puede ser por varias razones: pocas fuentes la cubren, la fuente principal no es transparente, hay sesgo marcado, o la informaci\u00f3n no se puede verificar con datos oficiales.' },
+              { q: '\u00bfContexto Claro tiene sesgo pol\u00edtico?', a: 'No. Analizamos fuentes de todos los espectros pol\u00edticos. El sistema mide el sesgo, no lo aplica. Nuestro c\u00f3digo abierto permite verificar esto.' },
+              { q: '\u00bfC\u00f3mo puedo reportar un error?', a: 'Puedes escribirnos a trav\u00e9s de nuestras redes sociales o abrir un issue en GitHub. Cada reporte nos ayuda a mejorar.' },
+            ].map((item, i) => (
+              <div key={i} className="card p-5 border border-border">
+                <h4 className="text-sm font-bold text-text-primary mb-2">{item.q}</h4>
+                <p className="text-sm text-text-secondary leading-relaxed">{item.a}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* CTA */}
+        <div className="text-center">
+          <button onClick={openAbout} className="px-6 py-3 rounded-xl bg-accent text-white text-sm font-bold hover:bg-accent-light transition-colors">
+            Conoce m&aacute;s sobre Contexto Claro
+          </button>
+        </div>
+
+      </main>
+      <Footer onAboutClick={openAbout} />
+    </div>
   )
 }
 
@@ -1358,6 +1640,7 @@ export default function App() {
   const [categoryFilter, setCategoryFilter] = useState('ALL')
   const [searchQuery, setSearchQuery] = useState(null)
   const [showAbout, setShowAbout] = useState(false)
+  const [showMethodology, setShowMethodology] = useState(false)
   const handleCountryChange = (code) => { trackCountryFilter(code); setCountryCode(code) }
   const { hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, loading, error } = useNewsSections(countryCode)
 
@@ -1407,6 +1690,16 @@ export default function App() {
 
   const openAbout = useCallback(() => {
     setShowAbout(true)
+    setShowMethodology(false)
+    setSelectedNewsId(null)
+    setShowAllNews(false)
+    setSearchQuery(null)
+    window.scrollTo({ top: 0 })
+  }, [])
+
+  const openMethodology = useCallback(() => {
+    setShowMethodology(true)
+    setShowAbout(false)
     setSelectedNewsId(null)
     setShowAllNews(false)
     setSearchQuery(null)
@@ -1460,6 +1753,10 @@ export default function App() {
 
   if (showAbout) {
     return <AboutPage onClose={() => setShowAbout(false)} headerProps={headerProps} />
+  }
+
+  if (showMethodology) {
+    return <MethodologyPage onClose={() => setShowMethodology(false)} headerProps={headerProps} openAbout={openAbout} />
   }
 
   if (searchQuery) {
@@ -1576,7 +1873,7 @@ export default function App() {
         </div>
 
         {/* Methodology Banner */}
-        <MethodologyBanner />
+        <MethodologyBanner onMethodologyClick={openMethodology} />
 
         {/* Top News Stories - Grid layout */}
         {topStories.length > 0 && (

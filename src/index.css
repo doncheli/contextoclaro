@@ -360,24 +360,24 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ═══════════════ LIGHT THEME ═══════════════ */
 [data-theme="light"] {
-  /* Base surfaces — warm grays to avoid clinical white */
-  --color-base: #f3f4f6;
-  --color-surface: #edf0f4;
+  /* Base surfaces */
+  --color-base: #f5f7fa;
+  --color-surface: #eef1f6;
   --color-card: #ffffff;
   --color-card-hover: #f9fafb;
 
-  /* Borders — slightly stronger for card separation on light bg */
-  --color-border: rgba(0, 0, 0, 0.10);
-  --color-border-hover: rgba(0, 0, 0, 0.18);
+  /* Borders */
+  --color-border: rgba(27, 79, 114, 0.10);
+  --color-border-hover: rgba(27, 79, 114, 0.20);
 
-  /* Accent — deeper blue for readability on white */
-  --color-accent: #1d4ed8;
-  --color-accent-light: #2563eb;
-  --color-accent-muted: rgba(29, 78, 216, 0.08);
+  /* Accent — navy del logo */
+  --color-accent: #1b4f72;
+  --color-accent-light: #2bb5b2;
+  --color-accent-muted: rgba(27, 79, 114, 0.08);
 
-  /* Semantic — more saturated to pop on light backgrounds */
-  --color-success: #047857;
-  --color-success-muted: rgba(4, 120, 87, 0.10);
+  /* Semantic */
+  --color-success: #8cb63c;
+  --color-success-muted: rgba(140, 182, 60, 0.12);
   --color-warning: #b45309;
   --color-warning-muted: rgba(180, 83, 9, 0.10);
   --color-danger: #b91c1c;
@@ -386,18 +386,18 @@ h1, h2, h3, h4, h5, h6 {
   /* Bias — rojo / blanco / azul oscuro */
   --color-bias-left: #dc2626;
   --color-bias-center: #ffffff;
-  --color-bias-right: #1e3a5f;
+  --color-bias-right: #1b4f72;
 
-  /* Text — dark slate for maximum readability */
-  --color-text-primary: #111827;
-  --color-text-secondary: #374151;
-  --color-text-muted: #6b7280;
+  /* Text */
+  --color-text-primary: #1a2a3a;
+  --color-text-secondary: #3d5a6e;
+  --color-text-muted: #6b8299;
 }
 [data-theme="light"] body {
   background-color: var(--color-base);
 }
 [data-theme="light"] .gradient-bg {
-  background: linear-gradient(160deg, #f3f4f6 0%, #e5e7eb 30%, #f3f4f6 60%, #e5e7eb 100%);
+  background: linear-gradient(160deg, #f5f7fa 0%, #eaeff5 30%, #f5f7fa 60%, #eaeff5 100%);
 }
 [data-theme="light"] .glass {
   background: rgba(255, 255, 255, 0.80);
@@ -458,8 +458,8 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--color-accent);
 }
 [data-theme="light"] ::selection {
-  background: rgba(29, 78, 216, 0.2);
-  color: #111827;
+  background: rgba(27, 79, 114, 0.2);
+  color: #1a2a3a;
 }
 [data-theme="light"] .shimmer {
   background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.03) 50%, transparent 100%);
@@ -505,7 +505,7 @@ h1, h2, h3, h4, h5, h6 {
   color: #4b5563;
 }
 [data-theme="light"] .footer-dark a:hover {
-  color: #1d4ed8;
+  color: #2bb5b2;
 }
 [data-theme="light"] .footer-dark h4 {
   color: #111827;

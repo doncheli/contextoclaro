@@ -225,12 +225,12 @@ function VerificadorSidebar({ overall, sc, r, circ, offset, bias, sourceCount, o
             <div className="flex h-4 rounded-full overflow-hidden bg-gray-300 mb-3 shadow-inner border border-gray-300">
               <div className="bg-red-600 bar-animate" style={{ width: `${bias.left}%` }} />
               <div className="bg-white bar-animate" style={{ width: `${bias.center}%` }} />
-              <div className="bg-[#1e3a5f] bar-animate" style={{ width: `${bias.right}%` }} />
+              <div className="bg-[#1b4f72] bar-animate" style={{ width: `${bias.right}%` }} />
             </div>
             <div className="flex justify-between text-[11px] font-semibold">
               <span className="text-red-600">Izquierda<br /><span className="text-sm font-bold">{bias.left}%</span></span>
               <span className="text-gray-500 text-center">Centro<br /><span className="text-sm font-bold">{bias.center}%</span></span>
-              <span className="text-[#1e3a5f] text-right">Derecha<br /><span className="text-sm font-bold">{bias.right}%</span></span>
+              <span className="text-[#1b4f72] text-right">Derecha<br /><span className="text-sm font-bold">{bias.right}%</span></span>
             </div>
           </div>
         )}
@@ -348,8 +348,8 @@ function SourcesPanel({ sources, isOpen, onClose }) {
     "izquierda": "text-red-600 border-red-300 bg-red-50",
     "centro-izquierda": "text-red-500 border-red-200 bg-red-50/50",
     "centro": "text-gray-600 border-gray-300 bg-gray-100",
-    "centro-derecha": "text-[#1e3a5f] border-blue-200 bg-blue-50/50",
-    "derecha": "text-[#1e3a5f] border-blue-300 bg-blue-50"
+    "centro-derecha": "text-[#1b4f72] border-blue-200 bg-blue-50/50",
+    "derecha": "text-[#1b4f72] border-blue-300 bg-blue-50"
   }
 
   return (

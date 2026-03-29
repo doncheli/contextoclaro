@@ -1073,8 +1073,7 @@ function Footer({ onAboutClick }) {
           <div className="flex flex-col items-start lg:items-end gap-4">
             <img src="/logo.png" alt="Contexto Claro" className="h-10 w-auto" />
             <p className="text-xs text-text-muted max-w-xs text-left lg:text-right leading-relaxed">
-              Analizamos la cobertura mediática de Latinoamérica para que puedas
-              informarte con contexto y sin sesgo.
+              Filtramos el ruido. Entregamos la verdad.
             </p>
             <div className="flex items-center gap-2">
               {SOCIAL_LINKS.map((social, i) => (
@@ -1098,7 +1097,7 @@ function Footer({ onAboutClick }) {
             <img src="/logo.png" alt="Contexto Claro" className="h-8 w-auto opacity-80" />
             <span className="text-xs text-text-muted">&copy; {new Date().getFullYear()} Contexto Claro — contextoclaro.com</span>
           </div>
-          <span className="text-xs text-text-muted">Hecho con transparencia para Latinoamérica</span>
+          <span className="text-xs text-text-muted">Filtramos el ruido. Entregamos la verdad.</span>
         </div>
       </div>
     </footer>
@@ -1399,8 +1398,8 @@ function AboutPage({ onClose, headerProps }) {
         <div className="text-center mb-16">
           <img src="/logo.png" alt="Contexto Claro" className="h-16 sm:h-20 w-auto mx-auto mb-8" />
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-heading text-text-primary leading-tight mb-4">
-            La verdad no tiene dueño.<br />
-            <span className="text-accent">El contexto s&iacute;.</span>
+            Filtramos el ruido.<br />
+            <span className="text-accent-light">Entregamos la verdad.</span>
           </h1>
           <p className="text-lg text-text-secondary max-w-2xl mx-auto leading-relaxed">
             Contexto Claro es una plataforma de verificaci&oacute;n y an&aacute;lisis de medios
@@ -1847,6 +1846,12 @@ export default function App() {
       <a href="#main-content" className="skip-link">Saltar al contenido principal</a>
       <Header onLogoClick={() => { setSearchQuery(null); closeArticle() }} {...headerProps} />
       <BreakingNewsBanner flagged={flagged} onSelectNews={selectNews} />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+        <p className="text-sm sm:text-base font-heading font-semibold text-text-secondary tracking-wide">
+          Filtramos el ruido. <span className="text-accent-light">Entregamos la verdad.</span>
+        </p>
+      </div>
 
       <main id="main-content" role="main" aria-label="Contenido principal" className="max-w-7xl mx-auto pb-8">
         {/* Hero Carousel */}

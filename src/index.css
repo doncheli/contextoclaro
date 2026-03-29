@@ -424,13 +424,14 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
 }
 [data-theme="light"] .sponsored-card {
-  background: linear-gradient(170deg, #ffffff 0%, #fffbeb 100%);
+  background: linear-gradient(170deg, #ffffff 0%, #f0fafa 100%);
+  border: 1px solid rgba(43, 181, 178, 0.15);
 }
 [data-theme="light"] .sponsored-card:hover {
-  box-shadow: 0 4px 20px rgba(180, 83, 9, 0.08), 0 0 0 1px rgba(180, 83, 9, 0.12);
+  box-shadow: 0 4px 20px rgba(27, 79, 114, 0.08), 0 0 0 1px rgba(43, 181, 178, 0.20);
 }
 [data-theme="light"] .sponsored-placeholder {
-  background: linear-gradient(135deg, rgba(180, 83, 9, 0.06) 0%, #f9fafb 50%, rgba(180, 83, 9, 0.04) 100%);
+  background: linear-gradient(135deg, rgba(43, 181, 178, 0.06) 0%, #f9fafb 50%, rgba(27, 79, 114, 0.04) 100%);
 }
 [data-theme="light"] .methodology-banner {
   background: linear-gradient(135deg, rgba(29, 78, 216, 0.06) 0%, rgba(243, 244, 246, 0.95) 40%, rgba(29, 78, 216, 0.04) 100%);

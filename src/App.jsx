@@ -821,15 +821,15 @@ function FlaggedNewsCard({ news, onSelectNews }) {
 function SponsoredNewsCard({ news, onSelectNews }) {
   return (
     <article
-      className="sponsored-card overflow-hidden cursor-pointer group rounded-2xl border border-warning/25"
+      className="sponsored-card overflow-hidden cursor-pointer group rounded-2xl border border-accent-light/25"
       onClick={() => onSelectNews(news.id)}
     >
       {/* Sponsored banner */}
-      <div className="bg-warning/10 px-4 py-2.5 flex items-center gap-2 border-b border-warning/15">
-        <div className="w-5 h-5 rounded-md bg-warning/20 flex items-center justify-center">
-          <DollarSign size={12} className="text-warning" aria-hidden="true" />
+      <div className="bg-accent-light/8 px-4 py-2.5 flex items-center gap-2 border-b border-accent-light/15">
+        <div className="w-5 h-5 rounded-md bg-accent-light/15 flex items-center justify-center">
+          <DollarSign size={12} className="text-accent-light" aria-hidden="true" />
         </div>
-        <span className="text-[11px] font-bold text-warning tracking-wide">CONTENIDO PATROCINADO</span>
+        <span className="text-[11px] font-bold text-accent tracking-wide">CONTENIDO PATROCINADO</span>
       </div>
 
       {/* Image or visual placeholder */}
@@ -841,8 +841,8 @@ function SponsoredNewsCard({ news, onSelectNews }) {
           </>
         ) : (
           <div className="w-full h-full sponsored-placeholder flex flex-col items-center justify-center gap-2">
-            <Megaphone size={28} className="text-warning/30" aria-hidden="true" />
-            <span className="text-[10px] text-warning/40 font-semibold tracking-wider uppercase">{news.source || 'Patrocinado'}</span>
+            <Megaphone size={28} className="text-accent-light/30" aria-hidden="true" />
+            <span className="text-[10px] text-accent/40 font-semibold tracking-wider uppercase">{news.source || 'Patrocinado'}</span>
           </div>
         )}
         <div className="absolute top-3 left-3 flex items-center gap-1.5">
@@ -860,9 +860,9 @@ function SponsoredNewsCard({ news, onSelectNews }) {
 
         {/* Sponsor info */}
         {news.sponsoredFlag && (
-          <div className="flex items-center gap-2 mb-2.5 px-3 py-2 rounded-lg bg-warning/8 border border-warning/15">
-            <Megaphone size={13} className="text-warning shrink-0" aria-hidden="true" />
-            <span className="text-xs text-warning font-semibold line-clamp-1">
+          <div className="flex items-center gap-2 mb-2.5 px-3 py-2 rounded-lg bg-accent-light/8 border border-accent-light/15">
+            <Megaphone size={13} className="text-accent-light shrink-0" aria-hidden="true" />
+            <span className="text-xs text-accent font-semibold line-clamp-1">
               Beneficia a: {news.sponsoredFlag}
             </span>
           </div>

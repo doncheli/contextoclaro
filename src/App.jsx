@@ -13,6 +13,7 @@ import AdBanner from './components/AdBanner'
 import CoverageMeter from './components/CoverageMeter'
 import MyConsumptionDashboard from './components/MyConsumption'
 import BlindspotLATAM from './components/BlindspotLATAM'
+import SocialCard from './components/SocialCard'
 import {
   trackCountryFilter, trackSearch, trackSectionView,
   trackFakeNewsAlertView, trackSponsoredAlertView, trackAdImpression, trackShareClick
@@ -1775,6 +1776,13 @@ export default function App() {
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
+
+  // Social card route — standalone page for screenshots/OG images
+  if (window.location.pathname === '/social-card') {
+    const params = new URLSearchParams(window.location.search)
+    const cardId = params.get('id') ? Number(params.get('id')) : null
+    return <SocialCard newsId={cardId} />
+  }
 
   if (loading) return <LoadingSkeleton />
   if (error) return <ErrorState message={error} />

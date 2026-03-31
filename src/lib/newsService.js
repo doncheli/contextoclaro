@@ -116,7 +116,7 @@ async function fetchBalanced(buildQuery, countryCode, limit) {
 }
 
 /**
- * Obtiene las noticias hero (las 3 más recientes con imagen).
+ * Obtiene las noticias hero (las 4 más recientes con imagen, 2 VE + 2 CO).
  */
 export async function fetchHeroNews(countryCode) {
   const buildQuery = (lim) => supabase
@@ -127,7 +127,7 @@ export async function fetchHeroNews(countryCode) {
     .order('published_at', { ascending: false })
     .limit(lim)
 
-  const data = await fetchBalanced(buildQuery, countryCode, 3)
+  const data = await fetchBalanced(buildQuery, countryCode, 4)
   return data.map(mapNewsRow)
 }
 

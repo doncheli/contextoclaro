@@ -56,53 +56,72 @@ function CardStyle1({ news }) {
         </div>
       )}
 
-      {/* Title + reasoning */}
-      <div className="px-16 pt-8">
-        <h1 className="text-[32px] font-extrabold leading-[1.2] text-[#1a2a3a] line-clamp-3">{news.title}</h1>
-        {news.reasoning && (
-          <p className="text-[15px] text-[#6b8299] leading-relaxed mt-4 line-clamp-3">{news.reasoning.split('|')[0].trim()}</p>
-        )}
+      {/* Title */}
+      <div className="px-16 pt-6">
+        <h1 className="text-[30px] font-extrabold leading-[1.2] text-[#1a2a3a] line-clamp-2">{news.title}</h1>
       </div>
 
-      {/* Spacer */}
-      <div className="flex-1" />
-
-      {/* Score + Bias row */}
-      <div className="px-16 pb-6 flex items-center gap-8">
-        <div className="flex items-center gap-4">
-          <div className="relative w-[80px] h-[80px]">
-            <svg width={80} height={80} className="transform -rotate-90">
-              <circle cx={40} cy={40} r={32} fill="none" stroke="#e5e7eb" strokeWidth="6" />
-              <circle cx={40} cy={40} r={32} fill="none" strokeWidth="6" strokeLinecap="round"
-                strokeDasharray={2*Math.PI*32} strokeDashoffset={2*Math.PI*32-(s/100)*2*Math.PI*32} stroke={scoreColor} />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl font-black" style={{ color: scoreColor }}>{s}</span>
-            </div>
-          </div>
-          <div>
-            <span className="text-sm font-bold text-[#1a2a3a]">Confiabilidad</span>
-            <span className="block text-xs text-[#6b8299]">{news.confidence}% confianza IA</span>
+      {/* Score ring + label — BIG */}
+      <div className="px-16 pt-5 flex items-center gap-6">
+        <div className="relative w-[120px] h-[120px] shrink-0">
+          <svg width={120} height={120} className="transform -rotate-90">
+            <circle cx={60} cy={60} r={50} fill="none" stroke="#e5e7eb" strokeWidth="8" />
+            <circle cx={60} cy={60} r={50} fill="none" strokeWidth="8" strokeLinecap="round"
+              strokeDasharray={2*Math.PI*50} strokeDashoffset={2*Math.PI*50-(s/100)*2*Math.PI*50} stroke={scoreColor} />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-[36px] font-black leading-none" style={{ color: scoreColor }}>{s}</span>
+            <span className="text-[10px] text-[#9ca3af]">/100</span>
           </div>
         </div>
         <div className="flex-1">
-          <div className="flex h-4 rounded-full overflow-hidden border border-gray-300">
-            {news.biasLeft > 0 && <div className="bg-red-500" style={{ width: `${news.biasLeft}%` }} />}
-            {news.biasCenter > 0 && <div className="bg-white border-x border-gray-200" style={{ width: `${news.biasCenter}%` }} />}
-            {news.biasRight > 0 && <div className="bg-[#1b4f72]" style={{ width: `${news.biasRight}%` }} />}
-          </div>
-          <div className="flex justify-between text-[11px] font-semibold mt-1">
-            <span className="text-red-500">Izq {news.biasLeft}%</span>
-            <span className="text-gray-400">Centro {news.biasCenter}%</span>
-            <span className="text-[#1b4f72]">Der {news.biasRight}%</span>
-          </div>
+          <span className="text-lg font-black text-[#1a2a3a] block" style={{ color: scoreColor }}>
+            {s >= 85 ? 'MUY FIABLE' : s >= 70 ? 'FIABLE' : s >= 50 ? 'PRECAUCIÓN' : 'NO FIABLE'}
+          </span>
+          <span className="text-sm text-[#6b8299] block mt-1">Confianza IA: {news.confidence}%</span>
+          <span className="text-sm text-[#6b8299]">{news.sourceCount || 1} fuentes verificadas</span>
         </div>
       </div>
 
+      {/* Bias bar — BIG */}
+      <div className="px-16 pt-5">
+        <span className="text-xs font-bold text-[#9ca3af] uppercase tracking-wider block mb-2">Espectro de sesgo</span>
+        <div className="flex h-7 rounded-full overflow-hidden border-2 border-gray-300">
+          {news.biasLeft > 0 && <div className="bg-red-500 flex items-center justify-center" style={{ width: `${news.biasLeft}%` }}>
+            {news.biasLeft > 15 && <span className="text-[11px] font-bold text-white">{news.biasLeft}%</span>}
+          </div>}
+          {news.biasCenter > 0 && <div className="bg-gray-100 flex items-center justify-center border-x border-gray-300" style={{ width: `${news.biasCenter}%` }}>
+            {news.biasCenter > 15 && <span className="text-[11px] font-bold text-gray-500">{news.biasCenter}%</span>}
+          </div>}
+          {news.biasRight > 0 && <div className="bg-[#1b4f72] flex items-center justify-center" style={{ width: `${news.biasRight}%` }}>
+            {news.biasRight > 15 && <span className="text-[11px] font-bold text-white">{news.biasRight}%</span>}
+          </div>}
+        </div>
+        <div className="flex justify-between text-[12px] font-bold mt-2">
+          <span className="text-red-500">◀ Izquierda</span>
+          <span className="text-gray-400">Centro</span>
+          <span className="text-[#1b4f72]">Derecha ▶</span>
+        </div>
+      </div>
+
+      {/* Perspective mini triptych */}
+      <div className="px-16 pt-4 pb-5 flex gap-3">
+        {[
+          { label: 'Izquierda', pct: news.biasLeft, color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
+          { label: 'Centro', pct: news.biasCenter, color: '#6b7280', bg: '#f9fafb', border: '#e5e7eb' },
+          { label: 'Derecha', pct: news.biasRight, color: '#1b4f72', bg: '#eff6ff', border: '#bfdbfe' },
+        ].map((p, i) => (
+          <div key={i} className="flex-1 rounded-xl p-3 text-center" style={{ background: p.bg, border: `1.5px solid ${p.border}` }}>
+            <span className="text-[22px] font-black block leading-none" style={{ color: p.color }}>{p.pct}%</span>
+            <span className="text-[10px] font-semibold mt-1 block" style={{ color: p.color }}>{p.label}</span>
+          </div>
+        ))}
+      </div>
+
       {/* Footer */}
-      <div className="px-16 py-5 flex items-center justify-between" style={{ background: '#1b4f72' }}>
+      <div className="px-16 py-4 flex items-center justify-between" style={{ background: '#1b4f72' }}>
         <span className="text-white text-sm font-bold">contextoclaro.com</span>
-        <span className="text-white/60 text-xs">Filtramos el ruido. Entregamos la verdad.</span>
+        <span className="text-[#2bb5b2] text-xs font-semibold">Filtramos el ruido. Entregamos la verdad.</span>
         <span className="text-white/60 text-xs">@don_cheli</span>
       </div>
     </div>

@@ -13,6 +13,7 @@ import AdBanner from './components/AdBanner'
 import CoverageMeter from './components/CoverageMeter'
 import MyConsumptionDashboard from './components/MyConsumption'
 import BlindspotLATAM from './components/BlindspotLATAM'
+import InstagramCardsPage from './components/InstagramCards'
 import NewsletterForm from './components/NewsletterForm'
 import SocialCard from './components/SocialCard'
 import {
@@ -1778,6 +1779,21 @@ export default function App() {
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
+
+  // Instagram cards page
+  if (window.location.pathname === '/instagram-cards') {
+    return (
+      <div className="gradient-bg" lang="es">
+        <Header onLogoClick={() => window.location.href = '/'} {...headerProps} />
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <h1 className="text-2xl font-extrabold font-heading text-text-primary mb-2">Cards para Instagram</h1>
+          <p className="text-sm text-text-secondary mb-8">Selecciona un estilo y una noticia para generar tu card de 1080×1080px.</p>
+          <InstagramCardsPage />
+        </main>
+        <Footer onAboutClick={openAbout} />
+      </div>
+    )
+  }
 
   // Social card route — standalone page for screenshots/OG images
   if (window.location.pathname === '/social-card') {

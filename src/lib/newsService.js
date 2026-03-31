@@ -75,41 +75,74 @@ function applyCountryFilter(query, countryCode) {
 }
 
 /**
+ * Fetch balanceado: cuando countryCode es 'ALL', trae mitad VE y mitad CO
+ * (más TECH como bonus), luego intercala por fecha.
+ * Cuando es un país específico, funciona normal.
+ */
+async function fetchBalanced(buildQuery, countryCode, limit) {
+  if (countryCode && countryCode !== 'ALL') {
+    const query = buildQuery(limit)
+    const { data, error } = await query.eq('country_code', countryCode)
+    if (error) throw error
+    return data || []
+  }
+
+  const half = Math.ceil(limit / 2)
+  const techLimit = Math.max(2, Math.floor(limit / 5))
+
+  const [veResult, coResult, techResult] = await Promise.all([
+    buildQuery(half).eq('country_code', 'VE'),
+    buildQuery(half).eq('country_code', 'CO'),
+    buildQuery(techLimit).eq('country_code', 'TECH'),
+  ])
+
+  if (veResult.error) throw veResult.error
+  if (coResult.error) throw coResult.error
+
+  const veData = veResult.data || []
+  const coData = coResult.data || []
+  const techData = techResult.data || []
+
+  // Intercalar VE y CO alternando, luego agregar TECH
+  const balanced = []
+  const maxLen = Math.max(veData.length, coData.length)
+  for (let i = 0; i < maxLen; i++) {
+    if (i < veData.length) balanced.push(veData[i])
+    if (i < coData.length) balanced.push(coData[i])
+  }
+  balanced.push(...techData)
+
+  return balanced.slice(0, limit)
+}
+
+/**
  * Obtiene las noticias hero (las 3 más recientes con imagen).
  */
 export async function fetchHeroNews(countryCode) {
-  let query = supabase
+  const buildQuery = (lim) => supabase
     .from('news')
     .select('*, news_sources(*)')
     .not('image', 'is', null)
     .not('image', 'like', '%googleusercontent%')
     .order('published_at', { ascending: false })
-    .limit(3)
+    .limit(lim)
 
-  query = applyCountryFilter(query, countryCode)
-
-  const { data, error } = await query
-
-  if (error) throw error
-  return (data || []).map(mapNewsRow)
+  const data = await fetchBalanced(buildQuery, countryCode, 3)
+  return data.map(mapNewsRow)
 }
 
 /**
  * Obtiene las noticias del resumen diario.
  */
 export async function fetchDailyNews(countryCode) {
-  let query = supabase
+  const buildQuery = (lim) => supabase
     .from('news')
     .select('*')
     .in('news_type', ['daily', 'feed'])
     .order('published_at', { ascending: false })
-    .limit(20)
+    .limit(lim)
 
-  query = applyCountryFilter(query, countryCode)
-
-  const { data, error } = await query
-
-  if (error) throw error
+  const data = await fetchBalanced(buildQuery, countryCode, 20)
   return data.map(mapNewsRow)
 }
 
@@ -117,17 +150,14 @@ export async function fetchDailyNews(countryCode) {
  * Obtiene las noticias de puntos ciegos (blindspot).
  */
 export async function fetchBlindspotNews(countryCode) {
-  let query = supabase
+  const buildQuery = (lim) => supabase
     .from('news')
     .select('*')
     .eq('news_type', 'blindspot')
     .order('published_at', { ascending: false })
+    .limit(lim)
 
-  query = applyCountryFilter(query, countryCode)
-
-  const { data, error } = await query
-
-  if (error) throw error
+  const data = await fetchBalanced(buildQuery, countryCode, 20)
   return data.map(mapNewsRow)
 }
 
@@ -135,18 +165,14 @@ export async function fetchBlindspotNews(countryCode) {
  * Obtiene las noticias del feed en tiempo real.
  */
 export async function fetchFeedNews(countryCode) {
-  let query = supabase
+  const buildQuery = (lim) => supabase
     .from('news')
     .select('*')
     .eq('news_type', 'feed')
     .order('published_at', { ascending: false })
-    .limit(30)
+    .limit(lim)
 
-  query = applyCountryFilter(query, countryCode)
-
-  const { data, error } = await query
-
-  if (error) throw error
+  const data = await fetchBalanced(buildQuery, countryCode, 30)
   return data.map(mapNewsRow)
 }
 
@@ -154,18 +180,14 @@ export async function fetchFeedNews(countryCode) {
  * Obtiene noticias detectadas como patrocinadas/propaganda.
  */
 export async function fetchSponsoredNews(countryCode) {
-  let query = supabase
+  const buildQuery = (lim) => supabase
     .from('news')
     .select('*')
     .not('sponsored_flag', 'is', null)
     .order('published_at', { ascending: false })
-    .limit(20)
+    .limit(lim)
 
-  query = applyCountryFilter(query, countryCode)
-
-  const { data, error } = await query
-
-  if (error) throw error
+  const data = await fetchBalanced(buildQuery, countryCode, 20)
   return data.map(mapNewsRow)
 }
 
@@ -173,18 +195,14 @@ export async function fetchSponsoredNews(countryCode) {
  * Obtiene noticias marcadas como falsas o engañosas por la IA.
  */
 export async function fetchFlaggedNews(countryCode) {
-  let query = supabase
+  const buildQuery = (lim) => supabase
     .from('news')
     .select('*')
     .in('gemini_verdict', ['fake', 'misleading'])
     .order('published_at', { ascending: false })
-    .limit(20)
+    .limit(lim)
 
-  query = applyCountryFilter(query, countryCode)
-
-  const { data, error } = await query
-
-  if (error) throw error
+  const data = await fetchBalanced(buildQuery, countryCode, 20)
   return data.map(mapNewsRow)
 }
 
@@ -192,33 +210,30 @@ export async function fetchFlaggedNews(countryCode) {
  * Obtiene TODAS las noticias (para el detalle).
  */
 export async function fetchAllNews(countryCode) {
-  let query = supabase
+  const buildQuery = (lim) => supabase
     .from('news')
     .select('*, news_sources(*)')
     .order('published_at', { ascending: false })
-    .limit(200)
+    .limit(lim)
 
-  query = applyCountryFilter(query, countryCode)
-
-  const { data, error } = await query
-
-  if (error) throw error
+  const data = await fetchBalanced(buildQuery, countryCode, 200)
   return data.map(mapNewsRow)
 }
 
 export async function fetchNewsByCategory(pattern, countryCode, limit = 12) {
-  let query = supabase
+  const buildQuery = (lim) => supabase
     .from('news')
     .select('*, news_sources(*)')
     .ilike('category', `%${pattern}%`)
     .order('published_at', { ascending: false })
-    .limit(limit)
+    .limit(lim)
 
-  query = applyCountryFilter(query, countryCode)
-
-  const { data, error } = await query
-  if (error) return []
-  return data.map(mapNewsRow)
+  try {
+    const data = await fetchBalanced(buildQuery, countryCode, limit)
+    return data.map(mapNewsRow)
+  } catch {
+    return []
+  }
 }
 
 /**

@@ -56,10 +56,16 @@ function CardStyle1({ news }) {
         </div>
       )}
 
-      {/* Title */}
-      <div className="px-16 pt-8 flex-1">
+      {/* Title + reasoning */}
+      <div className="px-16 pt-8">
         <h1 className="text-[32px] font-extrabold leading-[1.2] text-[#1a2a3a] line-clamp-3">{news.title}</h1>
+        {news.reasoning && (
+          <p className="text-[15px] text-[#6b8299] leading-relaxed mt-4 line-clamp-3">{news.reasoning.split('|')[0].trim()}</p>
+        )}
       </div>
+
+      {/* Spacer */}
+      <div className="flex-1" />
 
       {/* Score + Bias row */}
       <div className="px-16 pb-6 flex items-center gap-8">

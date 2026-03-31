@@ -163,3 +163,47 @@ export function observeScrollDepth(articleId, containerEl) {
   target.addEventListener('scroll', handler, { passive: true })
   return () => target.removeEventListener('scroll', handler)
 }
+
+// ═══════════════════════════════════════════
+// FIDELIZACIÓN
+// ═══════════════════════════════════════════
+
+export function trackPwaInstall(source) {
+  gtag('event', 'pwa_install_prompt', { source })
+}
+
+export function trackPwaInstalled() {
+  gtag('event', 'pwa_installed')
+}
+
+export function trackPushPermission(result) {
+  gtag('event', 'push_permission', { result }) // granted, denied, dismissed
+}
+
+export function trackPollVote(articleId, verdict, userVote) {
+  gtag('event', 'poll_vote', {
+    article_id: articleId,
+    ai_verdict: verdict,
+    user_vote: userVote, // 'real' or 'fake'
+    user_correct: verdict === 'real' ? userVote === 'real' : userVote === 'fake',
+  })
+}
+
+export function trackPollResult(articleId, userCorrect) {
+  gtag('event', 'poll_result_view', {
+    article_id: articleId,
+    user_correct: userCorrect,
+  })
+}
+
+export function trackNewsletterSubscribe(source) {
+  gtag('event', 'newsletter_subscribe', { source }) // footer, article, popup
+}
+
+export function trackNewsletterDismiss(source) {
+  gtag('event', 'newsletter_dismiss', { source })
+}
+
+export function trackConsumptionDashboard(action) {
+  gtag('event', 'consumption_dashboard', { action }) // view, clear, share
+}

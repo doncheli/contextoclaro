@@ -6,6 +6,13 @@ import App from './App.jsx'
 // Force light theme
 document.documentElement.setAttribute('data-theme', 'light')
 
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  })
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />

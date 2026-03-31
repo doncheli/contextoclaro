@@ -13,6 +13,7 @@ import AdBanner from './components/AdBanner'
 import CoverageMeter from './components/CoverageMeter'
 import MyConsumptionDashboard from './components/MyConsumption'
 import BlindspotLATAM from './components/BlindspotLATAM'
+import NewsletterForm from './components/NewsletterForm'
 import SocialCard from './components/SocialCard'
 import {
   trackCountryFilter, trackSearch, trackSectionView,
@@ -1096,6 +1097,7 @@ function Footer({ onAboutClick }) {
                 </a>
               ))}
             </div>
+            <NewsletterForm variant="inline" source="footer" />
           </div>
         </div>
 
@@ -2009,6 +2011,9 @@ export default function App() {
 
         {/* Methodology Banner */}
         <MethodologyBanner onMethodologyClick={openMethodology} />
+
+        {/* Newsletter banner */}
+        <NewsletterForm variant="banner" source="home" />
 
         {/* Top News Stories - Grid layout */}
         {topStories.length > 0 && (

@@ -1,0 +1,21 @@
+{
+  "name": "Contexto Claro",
+  "short_name": "Contexto Claro",
+  "description": "Filtramos el ruido. Entregamos la verdad. Noticias verificadas por IA.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#1b4f72",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["news", "education"],
+  "lang": "es",
+  "dir": "ltr"
+}

@@ -8,6 +8,7 @@ import { useArticleDetail } from './hooks/useNews'
 import AdBanner from './components/AdBanner'
 import CoverageMeter from './components/CoverageMeter'
 import { trackRead } from './lib/consumptionTracker'
+import NewsPoll from './components/NewsPoll'
 import NewsTriptych from './components/NewsTriptych'
 import {
   trackArticleView, trackArticleTimeSpent, trackVerificationView,
@@ -580,6 +581,9 @@ export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) 
           <AdBanner variant="sidebar" />
           </div>
         </div>
+
+        {/* Poll — user vote before seeing AI verdict */}
+        <NewsPoll newsId={newsId} geminiVerdict={news.geminiVerdict} geminiConfidence={news.geminiConfidence} />
 
         {/* News Triptych — perspective comparison */}
         <NewsTriptych sources={detail.sources} />

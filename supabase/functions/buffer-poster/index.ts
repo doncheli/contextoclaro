@@ -20,9 +20,7 @@ interface BufferProfile {
 }
 
 async function getBufferProfiles(): Promise<BufferProfile[]> {
-  const resp = await fetch("https://api.bufferapp.com/1/profiles.json", {
-    headers: { Authorization: `Bearer ${BUFFER_ACCESS_TOKEN}` },
-  });
+  const resp = await fetch(`https://api.bufferapp.com/1/profiles.json?access_token=${BUFFER_ACCESS_TOKEN}`);
   if (!resp.ok) {
     const err = await resp.text();
     console.error(`[buffer] Profiles error: ${err}`);
@@ -38,37 +36,31 @@ async function postToBuffer(
   imageUrl: string
 ): Promise<{ success: boolean; updates?: any; error?: string }> {
   try {
-    const body: any = {
-      profile_ids: profileIds,
-      text,
-      media: { link, thumbnail: imageUrl, photo: imageUrl },
-      shorten: true,
-    };
+    // Buffer API needs access_token as param + each profile_id separate
+    const params = new URLSearchParams();
+    params.append("access_token", BUFFER_ACCESS_TOKEN);
+    profileIds.forEach((id) => params.append("profile_ids[]", id));
+    params.append("text", text);
+    params.append("media[link]", link);
+    params.append("media[photo]", imageUrl);
+    params.append("media[thumbnail]", imageUrl);
+    params.append("shorten", "true");
 
     const resp = await fetch("https://api.bufferapp.com/1/updates/create.json", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${BUFFER_ACCESS_TOKEN}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        "profile_ids[]": profileIds.join(","),
-        text,
-        "media[link]": link,
-        "media[photo]": imageUrl,
-        "media[thumbnail]": imageUrl,
-        shorten: "true",
-      }),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params,
     });
 
-    if (!resp.ok) {
-      const err = await resp.text();
-      console.error(`[buffer] Post error: ${err}`);
-      return { success: false, error: err.substring(0, 300) };
-    }
+    const raw = await resp.text();
+    console.log(`[buffer] Response ${resp.status}: ${raw.substring(0, 500)}`);
 
-    const data = await resp.json();
-    return { success: data.success || false, updates: data.updates };
+    try {
+      const data = JSON.parse(raw);
+      return { success: data.success || false, status: resp.status, updates: data.updates, message: data.message, raw: raw.substring(0, 300) };
+    } catch {
+      return { success: false, status: resp.status, error: `Non-JSON: ${raw.substring(0, 200)}` };
+    }
   } catch (e) {
     return { success: false, error: String(e) };
   }
@@ -136,6 +128,8 @@ function generateCaption(news: any): string {
     `Filtramos el ruido. Entregamos la verdad.`,
     ``,
     `#ContextoClaro #FakeNews #NoticiasFalsas #Venezuela #Colombia #IA #Verificación #Noticias #DesinformaciónLATAM #DonCheli`,
+    ``,
+    `📅 ${new Date().toLocaleDateString("es", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`,
   ].filter(Boolean).join("\n");
 }
 
@@ -169,7 +163,7 @@ serve(async (_req: Request) => {
     const profileNames = profiles.map((p) => `${p.service}: ${p.formatted_username}`);
     console.log(`[buffer] Found ${profiles.length} profiles: ${profileNames.join(", ")}`);
 
-    // 2. Get the latest verified news (different from what X posted — offset by 1)
+    // 2. Get recent verified news with images
     const { data: news, error } = await supabase
       .from("news")
       .select("*")
@@ -177,7 +171,7 @@ serve(async (_req: Request) => {
       .not("image", "is", null)
       .in("country_code", ["VE", "CO", "TECH"])
       .order("published_at", { ascending: false })
-      .limit(3);
+      .limit(10);
 
     if (error || !news?.length) {
       return new Response(
@@ -186,16 +180,29 @@ serve(async (_req: Request) => {
       );
     }
 
-    // Pick the best news: prefer fake/misleading (more engagement), then most sources
-    const sorted = [...news].sort((a, b) => {
-      const priority: Record<string, number> = { fake: 3, misleading: 2, real: 1, unverified: 0 };
-      const aPri = priority[a.gemini_verdict] || 0;
-      const bPri = priority[b.gemini_verdict] || 0;
-      if (aPri !== bPri) return bPri - aPri;
-      return (b.source_count || 0) - (a.source_count || 0);
-    });
+    // Use hour of day as offset so each post is a different story
+    // 8AM=0, 1PM=1, 8PM=2 — maps to different news picks
+    const hour = new Date().getUTCHours();
+    const slot = hour <= 12 ? 0 : hour <= 17 ? 1 : 2;
 
-    const selected = sorted[0];
+    // Each of the 3 daily posts picks a different news by time slot
+    // Slot 0 (8AM): most impactful (fake/misleading first)
+    // Slot 1 (1PM): most covered (highest source count)
+    // Slot 2 (8PM): latest verified real news
+    let selected;
+    if (slot === 0) {
+      // Morning: prioritize fake/misleading for engagement
+      const fakes = news.filter((n: any) => n.gemini_verdict === "fake" || n.gemini_verdict === "misleading");
+      selected = fakes.length > 0 ? fakes[0] : news[0];
+    } else if (slot === 1) {
+      // Afternoon: most covered story
+      const byCoverage = [...news].sort((a: any, b: any) => (b.source_count || 0) - (a.source_count || 0));
+      // Skip the one used in morning slot
+      selected = byCoverage.find((n: any) => n.id !== news[0]?.id) || byCoverage[0];
+    } else {
+      // Night: latest news not used in previous slots
+      selected = news.length >= 3 ? news[2] : news[news.length - 1];
+    }
     const caption = generateCaption(selected);
     const cardUrl = `https://contextoclaro.com/social-card?id=${selected.id}&style=0`;
     const imageUrl = selected.image;

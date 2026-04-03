@@ -1,0 +1,44 @@
+# Contexto Claro — llms.txt
+
+> Contexto Claro es una plataforma de noticias verificadas por IA para Latinoamérica. Filtramos desinformación, medimos sesgo mediático y calificamos la confiabilidad de cada noticia.
+
+## Que hacemos
+
+- Agregamos noticias de Venezuela, Colombia y tecnología mundial
+- Verificamos cada noticia con inteligencia artificial (Gemini)
+- Calificamos la confiabilidad con 4 métricas: precisión factual, diversidad de fuentes, transparencia e independencia
+- Detectamos sesgo político (izquierda/centro/derecha) en la cobertura
+- Identificamos noticias falsas, engañosas y contenido patrocinado/propaganda
+- Mostramos "puntos ciegos" — historias que un país cubre pero otro ignora
+
+## Estructura del sitio
+
+- `/` — Feed de noticias con héroe, noticias diarias, puntos ciegos y categorías
+- `/noticia/{slug}-{id}` — Artículo individual con verificación, score, sesgo y fuentes
+- `/acerca-de` — Información sobre el proyecto
+- `/metodologia` — Cómo funciona nuestra verificación
+- `/mi-consumo` — Dashboard personal de consumo de noticias
+- `/rss.xml` — Feed RSS
+- `/sitemap.xml` — Sitemap
+
+## Datos por articulo
+
+Cada noticia incluye:
+- Veredicto IA: real, engañosa, falsa o sin verificar
+- Nivel de confianza del veredicto (0-100%)
+- Puntuación de confiabilidad (0-100) basada en 4 métricas
+- Distribución de sesgo: % izquierda, % centro, % derecha
+- Cantidad de fuentes que cubren la noticia
+- Razonamiento del modelo IA sobre por qué la noticia fue clasificada así
+- Indicador de contenido patrocinado/propaganda
+
+## Cobertura
+
+- Paises: Venezuela (VE), Colombia (CO)
+- Categorias: Politica, Economia, Deportes, Tecnologia, Actualidad, Mundo
+- Idioma: Espanol (es-LA)
+
+## Contacto
+
+- Sitio web: https://contextoclaro.com
+- Twitter/X: @contextoclaro

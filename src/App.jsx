@@ -16,6 +16,7 @@ import BlindspotLATAM from './components/BlindspotLATAM'
 import InstagramCardsPage from './components/InstagramCards'
 import NewsletterForm from './components/NewsletterForm'
 import SocialCard from './components/SocialCard'
+import AccessibilityWidget from './components/AccessibilityWidget'
 import {
   trackCountryFilter, trackSearch, trackSectionView,
   trackFakeNewsAlertView, trackSponsoredAlertView, trackAdImpression, trackShareClick
@@ -1817,6 +1818,7 @@ export default function App() {
           onSelectNews={selectNews}
         />
         <Footer onAboutClick={openAbout} />
+        <AccessibilityWidget />
       </div>
     )
   }
@@ -1897,6 +1899,7 @@ export default function App() {
           )}
         </main>
         <Footer onAboutClick={openAbout} />
+        <AccessibilityWidget />
       </div>
     )
   }
@@ -2113,6 +2116,7 @@ export default function App() {
       </main>
 
       <Footer onAboutClick={openAbout} />
+      <AccessibilityWidget />
     </div>
   )
 }

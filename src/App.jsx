@@ -1041,15 +1041,16 @@ function Footer({ onAboutClick }) {
       { label: 'Deportes', href: '#' },
     ]},
     { title: 'Verificación', links: [
+      { label: 'Metodología', href: '/methodology.html' },
       { label: 'Fake News', href: '#' },
-      { label: 'Metodología', href: '#' },
       { label: 'RSS Feed', href: '/rss.xml' },
     ]},
     { title: 'Proyecto', links: [
-      { label: 'Acerca de', href: '#', onClick: onAboutClick },
-      { label: 'GitHub', href: 'https://github.com/doncheli/contextoclaro', external: true },
+      { label: 'Nosotros', href: '/about.html' },
+      { label: 'Contacto', href: '/contact.html' },
+      { label: 'Términos', href: '/terms.html' },
       { label: 'Privacidad', href: '/privacy.html' },
-      { label: 'Ads.txt', href: '/ads.txt' },
+      { label: 'GitHub', href: 'https://github.com/doncheli/contextoclaro', external: true },
     ]},
   ]
 

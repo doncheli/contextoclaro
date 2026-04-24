@@ -8,6 +8,6 @@
     { "source": "/sitemap-news.xml", "destination": "https://sbtqtzqpoejeojfnajpu.supabase.co/functions/v1/sitemap?type=news" },
     { "source": "/rss.xml", "destination": "https://sbtqtzqpoejeojfnajpu.supabase.co/functions/v1/sitemap?type=rss" },
     { "source": "/feed", "destination": "https://sbtqtzqpoejeojfnajpu.supabase.co/functions/v1/sitemap?type=rss" },
-    { "source": "/((?!about\\.html|contact\\.html|terms\\.html|methodology\\.html|privacy\\.html|ads\\.txt|robots\\.txt|llms\\.txt|manifest\\.json|logo\\.png|doncheli\\.png|vite\\.svg|sw\\.js|tiktok|assets/).*)", "destination": "/index.html" }
+    { "source": "/noticia/:path*", "destination": "/index.html" }
   ]
 }

@@ -25,8 +25,98 @@ function slugify(text) {
 // Detecta firma de tweet: "\u2014 Autor (@handle) Mes D\u00eda, A\u00f1o"
 const TWEET_SIGNATURE_RE = /^[\s\u2014\u2013\-]*([^(]+?)\s+\(@([A-Za-z0-9_]+)\)\s+(.+)$/
 // pic.twitter.com/XXX y t.co/XXX
-const TWITTER_PIC_RE = /pic\.twitter\.com\/[A-Za-z0-9]+/g
+const TWITTER_PIC_RE = /pic\.twitter\.com\/([A-Za-z0-9]+)/g
 const TCO_RE = /https?:\/\/t\.co\/[A-Za-z0-9]+/g
+const TWEET_MEDIA_CACHE_KEY = 'tw_media_cache_v1'
+const TWEET_MEDIA_TTL = 24 * 3600 * 1000
+
+function readTwMediaCache(slug) {
+  try {
+    const raw = sessionStorage.getItem(TWEET_MEDIA_CACHE_KEY)
+    if (!raw) return null
+    const map = JSON.parse(raw)
+    const entry = map[slug]
+    if (!entry) return null
+    if (Date.now() - entry.ts > TWEET_MEDIA_TTL) return null
+    return entry.data
+  } catch { return null }
+}
+
+function writeTwMediaCache(slug, data) {
+  try {
+    const raw = sessionStorage.getItem(TWEET_MEDIA_CACHE_KEY)
+    const map = raw ? JSON.parse(raw) : {}
+    map[slug] = { ts: Date.now(), data }
+    sessionStorage.setItem(TWEET_MEDIA_CACHE_KEY, JSON.stringify(map))
+  } catch { /* quota / private */ }
+}
+
+async function resolveTweetMedia(slug) {
+  const cached = readTwMediaCache(slug)
+  if (cached) return cached
+  try {
+    const resp = await fetch(`/api/twitter-media?slug=${encodeURIComponent(slug)}`, { signal: AbortSignal.timeout(10000) })
+    if (!resp.ok) return null
+    const data = await resp.json()
+    writeTwMediaCache(slug, data)
+    return data
+  } catch { return null }
+}
+
+// Componente que embebe el media resuelto de un tweet
+function TweetMediaEmbed({ slug }) {
+  const [state, setState] = useState({ status: 'loading', data: null })
+  useEffect(() => {
+    let mounted = true
+    resolveTweetMedia(slug).then((data) => {
+      if (!mounted) return
+      setState({ status: data?.ok && data.media?.length ? 'ready' : 'failed', data })
+    })
+    return () => { mounted = false }
+  }, [slug])
+
+  if (state.status === 'loading') {
+    return <div className="my-3 h-44 rounded-lg bg-surface/60 animate-pulse" />
+  }
+  if (state.status === 'failed' || !state.data?.media?.length) {
+    return (
+      <a href={`https://pic.twitter.com/${slug}`} target="_blank" rel="noopener noreferrer"
+         className="inline-flex items-center gap-1 text-accent hover:text-accent-light underline-offset-2 hover:underline text-sm my-2">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+        <span>Ver en X</span>
+      </a>
+    )
+  }
+  const { media, user, tweet_id } = state.data
+  return (
+    <div className="my-3 space-y-2">
+      {media.map((m, i) => (
+        m.type === 'photo' ? (
+          <a key={i} href={`https://x.com/${user}/status/${tweet_id}`} target="_blank" rel="noopener noreferrer" className="block">
+            <img src={m.url} alt="" loading="lazy" className="w-full rounded-lg border border-border" />
+          </a>
+        ) : (
+          <video key={i} controls preload="metadata" poster={m.poster}
+                 className="w-full rounded-lg border border-border bg-black"
+                 playsInline>
+            <source src={m.url} type="video/mp4" />
+          </video>
+        )
+      ))}
+      {user && (
+        <a href={`https://x.com/${user}/status/${tweet_id}`} target="_blank" rel="noopener noreferrer"
+           className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-accent">
+          <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor" aria-hidden="true">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+          <span>Ver tweet original</span>
+        </a>
+      )}
+    </div>
+  )
+}
 
 function isTweetSignature(text) {
   if (!text) return null
@@ -830,15 +920,23 @@ export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) 
                     )
                   }
 
-                  // Tweet quote: párrafo que termina con pic.twitter.com — encerrar con barra lateral
-                  const hasTweetMedia = /pic\.twitter\.com\/|https?:\/\/t\.co\//.test(b.text)
+                  // Tweet quote: párrafo que termina con pic.twitter.com — embeber media inline
+                  const picMatches = [...(b.text || '').matchAll(/pic\.twitter\.com\/([A-Za-z0-9]+)/g)]
+                  const hasTweetMedia = picMatches.length > 0 || /https?:\/\/t\.co\//.test(b.text || '')
                   if (hasTweetMedia) {
+                    // Quitar las URLs pic.twitter.com del texto visible — el embed las representa
+                    let cleanText = (b.text || '').replace(/\s*pic\.twitter\.com\/[A-Za-z0-9]+/g, '').trim()
                     return (
                       <div key={i}>
                         <blockquote className="my-4 pl-4 border-l-2 border-accent/40 bg-accent/5 py-3 pr-3 rounded-r-lg">
-                          <p className="text-[15px] sm:text-base text-text-primary leading-[1.7]">
-                            {renderWithTwitterLinks(b.text)}
-                          </p>
+                          {cleanText && (
+                            <p className="text-[15px] sm:text-base text-text-primary leading-[1.7]">
+                              {renderWithTwitterLinks(cleanText)}
+                            </p>
+                          )}
+                          {picMatches.map((m, idx) => (
+                            <TweetMediaEmbed key={`${m[1]}-${idx}`} slug={m[1]} />
+                          ))}
                         </blockquote>
                         {showAd && <AdBanner variant="article-inline" />}
                       </div>

@@ -66,19 +66,29 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(59, 130, 246, 0.08);
 }
 
-/* Glass effects */
+/* Glass effects
+ * Nota: backdrop-filter en mobile Chrome/WebView causa screenshots negros
+ * en ciertos compositors. Se desactiva debajo de 768px y se usa background
+ * opaque como fallback (sigue luciendo bien sin transparencia). */
 .glass {
-  background: rgba(26, 37, 64, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(26, 37, 64, 0.92);
   border: 1px solid var(--color-border);
 }
-
 .glass-strong {
-  background: rgba(19, 28, 46, 0.92);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: rgb(19, 28, 46);
   border: 1px solid var(--color-border);
+}
+@media (min-width: 768px) {
+  .glass {
+    background: rgba(26, 37, 64, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .glass-strong {
+    background: rgba(19, 28, 46, 0.92);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
 }
 
 /* Subtle gradient background */
@@ -797,11 +807,18 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ═══════════════ HEADER/FOOTER ═══════════════ */
+/* opaque background en mobile para permitir screenshots (backdrop-filter
+ * rompe compositor en Android Chrome / WebView) */
 .header-dark {
-  background: rgba(15, 23, 42, 0.97);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: rgb(15, 23, 42);
   border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+@media (min-width: 768px) {
+  .header-dark {
+    background: rgba(15, 23, 42, 0.97);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
 }
 [data-theme="light"] .header-dark {
   background: rgba(255, 255, 255, 0.95);

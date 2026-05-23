@@ -210,26 +210,35 @@ function SectionHeader({ title, subtitle, icon: Icon, onSeeMore }) {
   )
 }
 
-function NewsImage({ src, alt, className = "", news, priority = false }) {
+/**
+ * Optimiza URLs de imágenes: pide tamaños menores cuando no es hero.
+ * Wikimedia thumb URLs y Unsplash soportan resize via query/path.
+ */
+function optimizeImageUrl(url, targetWidth = 600) {
+  if (!url) return url
+  // Unsplash: ?w=NNN parameter
+  if (url.includes('images.unsplash.com')) {
+    return url.replace(/[?&]w=\d+/, `?w=${targetWidth}`).replace(/[?&]q=\d+/, '&q=70')
+  }
+  // Wikimedia: /thumb/.../1200px-FILE → /thumb/.../{N}px-FILE
+  if (url.includes('upload.wikimedia.org/wikipedia/commons/thumb/')) {
+    return url.replace(/\/\d+px-/, `/${targetWidth}px-`)
+  }
+  return url
+}
+
+function NewsImage({ src, alt, className = "", news, priority = false, width = 600, height }) {
   const [failed, setFailed] = useState(false)
   const fallback = news ? getFallbackImage(news) : null
+  const targetW = priority ? 1200 : 600
+  const optimized = (!src || failed) ? optimizeImageUrl(fallback, targetW) : optimizeImageUrl(src, targetW)
 
-  if ((!src || failed) && fallback) {
+  if (!optimized) {
     return (
-      <img
-        src={fallback}
-        alt={alt}
-        className={className}
-        loading="lazy"
-        decoding="async"
-        fetchPriority="low"
-      />
-    )
-  }
-
-  if (!src || failed) {
-    return (
-      <div className={`news-placeholder flex flex-col items-center justify-center gap-2 ${className}`}>
+      <div
+        className={`news-placeholder flex flex-col items-center justify-center gap-2 ${className}`}
+        style={{ aspectRatio: '16/9' }}
+      >
         <Newspaper size={36} className="text-accent/30" aria-hidden="true" />
         <span className="text-[10px] text-text-muted/50 font-medium tracking-wide uppercase">Sin imagen</span>
       </div>
@@ -238,14 +247,16 @@ function NewsImage({ src, alt, className = "", news, priority = false }) {
 
   return (
     <img
-      src={src}
+      src={optimized}
       alt={alt}
       className={className}
       loading={priority ? "eager" : "lazy"}
       decoding="async"
       fetchPriority={priority ? "high" : "auto"}
+      width={width}
+      height={height || Math.round(width * 9 / 16)}
       onError={() => setFailed(true)}
-      loading="lazy"
+      style={{ aspectRatio: '16/9' }}
     />
   )
 }

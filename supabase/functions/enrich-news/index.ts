@@ -197,12 +197,48 @@ const CATEGORY_IMAGES: Record<string, string> = {
   cultura: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1200&q=80",
   espectaculos: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1200&q=80",
 
-  // Países (último resort)
+  // Países (último resort, único — para evitar duplicación se usa POOL más abajo)
   venezuela: "https://images.unsplash.com/photo-1589519160732-57fc498494f8?w=1200&q=80",
   colombia: "https://images.unsplash.com/photo-1568632234157-ce7aecd03d0d?w=1200&q=80",
 };
 
+// Pool diversificado por país — selecciona deterministicamente por news.id
+const VE_POOL: string[] = [
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Panoramic_view_of_Caracas_night.jpg/1280px-Panoramic_view_of_Caracas_night.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Caracas_night_year_2010.jpg/1280px-Caracas_night_year_2010.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Caracas_Nocturna.jpg/1280px-Caracas_Nocturna.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/f/fd/Caracas_at_Night.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Panoramic_View_of_Caracas_from_Militar_Hospital.jpg/1280px-Panoramic_View_of_Caracas_from_Militar_Hospital.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Caracas_skyline_and_Avila_mountain_from_my_penthouse.JPG/1280px-Caracas_skyline_and_Avila_mountain_from_my_penthouse.JPG",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Panoramic_view_of_Caracas%2C_Venezuela_circa_1900-1906_cut.jpg/1280px-Panoramic_view_of_Caracas%2C_Venezuela_circa_1900-1906_cut.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Salto_Angel_Dry_Season.jpg/1280px-Salto_Angel_Dry_Season.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Salto_del_Angel-Canaima-Venezuela18.JPG/1280px-Salto_del_Angel-Canaima-Venezuela18.JPG",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Salto_del_Angel-Canaima-Venezuela03.JPG/1280px-Salto_del_Angel-Canaima-Venezuela03.JPG",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Salto_del_Angel-Canaima-Venezuela07.JPG/1280px-Salto_del_Angel-Canaima-Venezuela07.JPG",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Iguana_in_the_Maracaibo_wild.jpg/1280px-Iguana_in_the_Maracaibo_wild.jpg",
+];
+const CO_POOL: string[] = [
+  "https://upload.wikimedia.org/wikipedia/commons/5/59/Calle_de_La_Escopeta%2C_Cali%2C_Colombia_02.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/c/ce/Calle_de_La_Escopeta%2C_Cali%2C_Colombia_01.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Calle_5a_Petro.jpg/1280px-Calle_5a_Petro.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/6/62/Perspectiva_de_la_Calle_7%C2%AA%2C_Barrio_La_Merced%2C_Cali%2C_Colombia_01.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/4/4f/Perspectiva_de_la_Calle_7%C2%AA%2C_Barrio_La_Merced%2C_Cali%2C_Colombia_02.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/a/ae/Calle_7%C2%AA_Esquina_Carrera_6%C2%AA%2C_Barrio_Santa_Rosa%2C_Cali%2C_Colombia_01.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Cordillera_Central_de_los_Andes_colombianos_-_Camino_nacional_-_2800_msnm_-_Flickr_-_Alejandro_Bayer.jpg/1280px-Cordillera_Central_de_los_Andes_colombianos_-_Camino_nacional_-_2800_msnm_-_Flickr_-_Alejandro_Bayer.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Cordillera_Central_de_los_Andes_colombianos_-_Camino_nacional_-_2800_msnm_-_Flickr_-_Alejandro_Bayer_%281%29.jpg/1280px-Cordillera_Central_de_los_Andes_colombianos_-_Camino_nacional_-_2800_msnm_-_Flickr_-_Alejandro_Bayer_%281%29.jpg",
+];
+const GENERIC_POOL: string[] = [
+  "https://images.unsplash.com/photo-1504711434969-e33886168d5c?w=1200&q=80",
+  "https://images.unsplash.com/photo-1495020689067-958852a7765e?w=1200&q=80",
+  "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=1200&q=80",
+  "https://images.unsplash.com/photo-1432821596592-e2c18b78144f?w=1200&q=80",
+];
 const GENERIC_FALLBACK = "https://images.unsplash.com/photo-1504711434969-e33886168d5c?w=1200&q=80";
+
+function poolPick(pool: string[], id: number): string {
+  // Hash determinístico simple
+  return pool[Math.abs(id) % pool.length];
+}
 
 function pickImage(news: { category?: string | null; title?: string | null; country_code?: string | null }): { url: string; reason: string } {
   const title = (news.title || "").toLowerCase();
@@ -218,13 +254,19 @@ function pickImage(news: { category?: string | null; title?: string | null; coun
   }
   if (bestKw) return { url: PEOPLE_PHOTOS[bestKw], reason: `persona: ${bestKw}` };
 
-  // 2. Fallback: categoría/keyword
+  // 2. Fallback: categoría/keyword (también determinístico si hay multiples por keyword)
   for (const [kw, url] of Object.entries(CATEGORY_IMAGES)) {
     if (text.includes(kw)) return { url, reason: `categoría: ${kw}` };
   }
-  if (news.country_code === "VE" || text.includes("venezuela")) return { url: CATEGORY_IMAGES.venezuela, reason: "país: VE" };
-  if (news.country_code === "CO" || text.includes("colombia")) return { url: CATEGORY_IMAGES.colombia, reason: "país: CO" };
-  return { url: GENERIC_FALLBACK, reason: "genérico" };
+  // 3. Pool por país — diversidad visual (mismo país, distintas imágenes)
+  const id = (news as any).id || 0;
+  if (news.country_code === "VE" || text.includes("venezuela")) {
+    return { url: poolPick(VE_POOL, id), reason: `pool VE [${id % VE_POOL.length}]` };
+  }
+  if (news.country_code === "CO" || text.includes("colombia")) {
+    return { url: poolPick(CO_POOL, id), reason: `pool CO [${id % CO_POOL.length}]` };
+  }
+  return { url: poolPick(GENERIC_POOL, id), reason: "genérico" };
 }
 
 // Detecta URLs claramente inválidas para una foto: .mp4, vacías, etc.

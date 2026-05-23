@@ -544,6 +544,7 @@ async function insertNews(
     country: article.country,
     country_code: article.country_code,
     image: article.image,
+    source_url: article.url, // ← guardar URL original para re-scraping y deduplicación
     source_label: article.source_name,
     credibility: article.source_credibility >= 80 ? "alta" : article.source_credibility >= 50 ? "media" : "baja",
     time_label: formatTimeAgo(article.published_at),

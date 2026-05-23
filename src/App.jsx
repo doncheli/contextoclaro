@@ -285,7 +285,7 @@ function LoadingSkeleton() {
   return (
     <div className="gradient-bg flex items-center justify-center">
       <div className="flex flex-col items-center gap-4 fade-in">
-        <img src="/logo.png" alt="Contexto Claro" className="h-14 w-auto pulse-soft" />
+        <img src="/logo.png" alt="Contexto Claro" width="300" height="80" className="h-14 w-auto pulse-soft" loading="eager" fetchPriority="high" />
         <p className="text-xs text-text-muted pulse-soft">Cargando noticias...</p>
       </div>
     </div>
@@ -378,7 +378,7 @@ function Header({ onLogoClick, countryCode, onCountryChange, onSelectNews, onSea
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <button onClick={onLogoClick} aria-label="Ir al inicio — Contexto Claro" className="flex items-center group">
-            <img src="/logo.png" alt="Contexto Claro" className="h-10 sm:h-11 w-auto group-hover:brightness-110 transition-all" />
+            <img src="/logo.png" alt="Contexto Claro" width="300" height="80" className="h-10 sm:h-11 w-auto group-hover:brightness-110 transition-all" loading="eager" fetchPriority="high" />
           </button>
 
           {/* Desktop Nav */}
@@ -1065,7 +1065,7 @@ function Footer({ onAboutClick }) {
 
           {/* Logo + info */}
           <div className="flex flex-col items-start lg:items-end gap-4">
-            <img src="/logo.png" alt="Contexto Claro" className="h-10 w-auto" />
+            <img src="/logo.png" alt="Contexto Claro" width="300" height="80" className="h-10 w-auto" loading="lazy" />
             <p className="text-xs text-text-muted max-w-xs text-left lg:text-right leading-relaxed">
               Filtramos el ruido. Entregamos la verdad.
             </p>
@@ -1089,7 +1089,7 @@ function Footer({ onAboutClick }) {
 
         <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Contexto Claro" className="h-8 w-auto opacity-80" />
+            <img src="/logo.png" alt="Contexto Claro" width="300" height="80" className="h-8 w-auto opacity-80" loading="lazy" />
             <span className="text-xs text-text-muted">&copy; {new Date().getFullYear()} Contexto Claro — contextoclaro.com</span>
           </div>
           <span className="text-xs text-text-muted">Filtramos el ruido. Entregamos la verdad.</span>

@@ -55,12 +55,14 @@ export default async function handler(req) {
     return new Response(JSON.stringify(data), {
       headers: {
         'Content-Type': 'application/json',
-        // Browser cache 30s
-        'Cache-Control': 'public, max-age=30, must-revalidate',
-        // Vercel Edge Network cache (separado de browser) — 5 min con SWR 30 min
-        'Vercel-CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=1800',
-        // CDN downstream (Cloudflare cuando esté activo) — 3 min
-        'CDN-Cache-Control': 'public, s-maxage=180',
+        // Browser cache mínimo — siempre re-pregunta al edge (browser hit es overkill)
+        'Cache-Control': 'public, max-age=10, must-revalidate',
+        // Vercel Edge: 30s fresh + 5 min stale-while-revalidate.
+        // Garantiza máximo 30s entre noticia nueva ingestada y aparición a usuarios.
+        // SWR alto: si el origen falla, sigue sirviendo cache hasta 5 min mientras retry.
+        'Vercel-CDN-Cache-Control': 'public, s-maxage=30, stale-while-revalidate=300',
+        // CDN downstream (Cloudflare cuando esté activo) — alineado: 30s fresh.
+        'CDN-Cache-Control': 'public, s-maxage=30, stale-while-revalidate=300',
         'Vary': 'Accept-Encoding',
       },
     })

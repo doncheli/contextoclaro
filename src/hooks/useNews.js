@@ -10,8 +10,12 @@ import {
   fetchHomeFeed,
 } from '../lib/newsService'
 
-const CACHE_TTL_MS = 10 * 60 * 1000 // 10min — más agresivo para tolerar timeouts
-const CACHE_PREFIX = 'cc_cache_v2_'
+// localStorage cache: muestra el contenido viejo de inmediato (UX) pero
+// SIEMPRE refresca en background. TTL solo controla cuándo se considera
+// "demasiado viejo para ni mostrarlo". 5 min es buen balance: el edge
+// CDN sirve 30s fresh; cliente garantiza nunca >5 min sin refresh.
+const CACHE_TTL_MS = 5 * 60 * 1000
+const CACHE_PREFIX = 'cc_cache_v3_'
 
 function readCache(key) {
   try {

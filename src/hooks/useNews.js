@@ -56,6 +56,7 @@ export function useNewsSections(countryCode = 'ALL') {
     catEconomia: [],
     catDeportes: [],
     catTecnologia: [],
+    catInvestigacion: [],
   })
   const [loading, setLoading] = useState(!cached)
   const [error, setError] = useState(null)
@@ -74,7 +75,7 @@ export function useNewsSections(countryCode = 'ALL') {
   }, [countryCode])
 
   const loadDeferred = useCallback(async () => {
-    const [blindspot, flagged, sponsored, allNews, catPolitica, catEconomia, catDeportes, catTecnologia] = await Promise.all([
+    const [blindspot, flagged, sponsored, allNews, catPolitica, catEconomia, catDeportes, catTecnologia, catInvestigacion] = await Promise.all([
       fetchBlindspotNews(countryCode),
       fetchFlaggedNews(countryCode),
       fetchSponsoredNews(countryCode),
@@ -83,9 +84,10 @@ export function useNewsSections(countryCode = 'ALL') {
       fetchNewsByCategory('conomí', countryCode),
       fetchNewsByCategory('eporte', countryCode),
       fetchNewsByCategory('ecnolog', countryCode),
+      fetchNewsByCategory('investigaci', countryCode, 8),
     ])
     if (!mountedRef.current) return null
-    return { blindspot, flagged, sponsored, allNews, catPolitica, catEconomia, catDeportes, catTecnologia }
+    return { blindspot, flagged, sponsored, allNews, catPolitica, catEconomia, catDeportes, catTecnologia, catInvestigacion }
   }, [countryCode])
 
   useEffect(() => {

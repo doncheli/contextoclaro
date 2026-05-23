@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react'
 import {
   Search, Eye, CheckCircle, AlertOctagon,
   ChevronRight, User as UserIcon, ChevronDown,
@@ -6,22 +6,32 @@ import {
   Menu, X, TrendingUp, BarChart3, Compass, Newspaper, AlertTriangle, DollarSign, Megaphone,
   Share2, Clock, ExternalLink, Copy, MessageCircle, Flame
 } from 'lucide-react'
-import ArticleView from './NewsDetailModal'
 import { useNewsSections, useNewsSearch } from './hooks/useNews'
 import { searchNews } from './lib/newsService'
 import AdBanner from './components/AdBanner'
 import CoverageMeter from './components/CoverageMeter'
-import MyConsumptionDashboard from './components/MyConsumption'
 import BlindspotLATAM from './components/BlindspotLATAM'
-import InstagramCardsPage from './components/InstagramCards'
 import NewsletterForm from './components/NewsletterForm'
-import SocialCard from './components/SocialCard'
-import AccessibilityWidget from './components/AccessibilityWidget'
 import BottomNav from './components/BottomNav'
-import FactCheckDashboard from './components/FactCheckDashboard'
 import ScoreBadge from './components/ScoreBadge'
 import GeminiBadge from './components/GeminiBadge'
 import BreakingBanner from './components/BreakingBanner'
+
+/* ═══════════════ LAZY-LOADED COMPONENTS ═══════════════ */
+// Estos chunks solo bajan cuando el usuario navega a esa vista.
+// Reduce el bundle inicial en ~70KB gzip.
+const ArticleView = lazy(() => import('./NewsDetailModal'))
+const MyConsumptionDashboard = lazy(() => import('./components/MyConsumption'))
+const InstagramCardsPage = lazy(() => import('./components/InstagramCards'))
+const SocialCard = lazy(() => import('./components/SocialCard'))
+const FactCheckDashboard = lazy(() => import('./components/FactCheckDashboard'))
+const AccessibilityWidget = lazy(() => import('./components/AccessibilityWidget'))
+
+const LazyFallback = () => (
+  <div className="flex items-center justify-center py-24" role="status" aria-label="Cargando">
+    <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+  </div>
+)
 import {
   trackCountryFilter, trackSearch, trackSectionView,
   trackFakeNewsAlertView, trackSponsoredAlertView, trackAdImpression, trackShareClick
@@ -1605,7 +1615,7 @@ export default function App() {
   const [showConsumption, setShowConsumption] = useState(() => window.location.pathname === '/mi-consumo')
   const [showFactCheck, setShowFactCheck] = useState(() => window.location.pathname === '/verificaciones')
   const handleCountryChange = (code) => { trackCountryFilter(code); setCountryCode(code) }
-  const { hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, catPolitica, catEconomia, catDeportes, catTecnologia, loading, error } = useNewsSections(countryCode)
+  const { hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, catPolitica, catEconomia, catDeportes, catTecnologia, catInvestigacion, loading, error } = useNewsSections(countryCode)
   const norm = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
 
   const scrollPosRef = useRef(0)
@@ -1756,7 +1766,7 @@ export default function App() {
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <h1 className="text-2xl font-extrabold font-heading text-text-primary mb-2">Cards para Instagram</h1>
           <p className="text-sm text-text-secondary mb-8">Selecciona un estilo y una noticia para generar tu card de 1080×1080px.</p>
-          <InstagramCardsPage />
+          <Suspense fallback={<LazyFallback />}><InstagramCardsPage /></Suspense>
         </main>
         <Footer onAboutClick={openAbout} />
       </div>
@@ -1767,7 +1777,7 @@ export default function App() {
   if (window.location.pathname === '/social-card') {
     const params = new URLSearchParams(window.location.search)
     const cardId = params.get('id') ? Number(params.get('id')) : null
-    return <SocialCard newsId={cardId} />
+    return <Suspense fallback={<LazyFallback />}><SocialCard newsId={cardId} /></Suspense>
   }
 
   if (loading) return <LoadingSkeleton />
@@ -1778,14 +1788,16 @@ export default function App() {
     return (
       <div className="gradient-bg">
         <Header onLogoClick={closeArticle} {...headerProps} />
-        <ArticleView
-          newsId={selectedNewsId}
-          allNews={allNews}
-          onClose={closeArticle}
-          onSelectNews={selectNews}
-        />
+        <Suspense fallback={<LazyFallback />}>
+          <ArticleView
+            newsId={selectedNewsId}
+            allNews={allNews}
+            onClose={closeArticle}
+            onSelectNews={selectNews}
+          />
+        </Suspense>
         <Footer onAboutClick={openAbout} />
-        <AccessibilityWidget />
+        <Suspense fallback={null}><AccessibilityWidget /></Suspense>
       </div>
     )
   }
@@ -1806,7 +1818,7 @@ export default function App() {
             <h1 className="text-2xl sm:text-3xl font-extrabold font-heading text-text-primary mb-2">Mi Consumo</h1>
             <p className="text-sm text-text-secondary">Así se ve tu dieta informativa. ¿Estás leyendo de forma equilibrada?</p>
           </div>
-          <MyConsumptionDashboard />
+          <Suspense fallback={<LazyFallback />}><MyConsumptionDashboard /></Suspense>
         </main>
         <Footer onAboutClick={openAbout} />
         <BottomNav
@@ -1817,7 +1829,7 @@ export default function App() {
             else if (tab === 'search') document.querySelector('input[type=search],input[placeholder*="Buscar"],input[placeholder*="buscar"]')?.focus()
           }}
         />
-        <AccessibilityWidget />
+        <Suspense fallback={null}><AccessibilityWidget /></Suspense>
       </div>
     )
   }
@@ -1826,7 +1838,7 @@ export default function App() {
     return (
       <div className="gradient-bg" lang="es">
         <Header onLogoClick={() => { setShowFactCheck(false); window.history.pushState({}, '', '/') }} {...headerProps} />
-        <FactCheckDashboard flagged={flagged} stats={stats} onSelectNews={selectNews} />
+        <Suspense fallback={<LazyFallback />}><FactCheckDashboard flagged={flagged} stats={stats} onSelectNews={selectNews} /></Suspense>
         <Footer onAboutClick={openAbout} />
         <BottomNav
           activeTab="factcheck"
@@ -1836,7 +1848,7 @@ export default function App() {
             else if (tab === 'consumption') openConsumption()
           }}
         />
-        <AccessibilityWidget />
+        <Suspense fallback={null}><AccessibilityWidget /></Suspense>
       </div>
     )
   }
@@ -1903,7 +1915,7 @@ export default function App() {
             else if (tab === 'consumption') openConsumption()
           }}
         />
-        <AccessibilityWidget />
+        <Suspense fallback={null}><AccessibilityWidget /></Suspense>
       </div>
     )
   }
@@ -1919,6 +1931,7 @@ export default function App() {
   const economia = catEconomia || []
   const tecnologia = catTecnologia || []
   const deportes = catDeportes || []
+  const investigacion = catInvestigacion || []
 
   return (
     <div className="gradient-bg" lang="es">
@@ -2002,6 +2015,53 @@ export default function App() {
             </ScrollSection>
           </section>
         )}
+
+        {/* Periodismo de Investigación — ANTES de Tecnología */}
+        <section className="px-4 sm:px-6 lg:px-8 mt-12">
+          <div className="rounded-2xl border border-danger/25 bg-gradient-to-br from-danger/[0.06] via-card to-card p-5 sm:p-7">
+            <div className="flex items-start gap-3 mb-5">
+              <div className="w-11 h-11 rounded-xl bg-danger/15 border border-danger/30 flex items-center justify-center shrink-0">
+                <AlertOctagon size={22} className="text-danger" strokeWidth={2.2} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-danger">Investigación</span>
+                  <span className="text-[10px] text-text-muted">·</span>
+                  <span className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">Reportajes de fondo</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-extrabold font-heading mt-0.5">Periodismo de Investigación</h2>
+                <p className="text-xs sm:text-sm text-text-secondary mt-1.5 leading-relaxed max-w-2xl">
+                  Reportajes exhaustivos sobre corrupción, malversación y redes clientelares en Colombia y Venezuela.
+                  Rigor probatorio absoluto. Cero alucinaciones. Solo lo que se puede documentar.
+                </p>
+              </div>
+              {investigacion.length > 0 && (
+                <button
+                  onClick={() => filterByCategory('INVESTIGACIÓN')}
+                  className="text-xs text-accent font-semibold hover:text-accent-light transition-colors shrink-0 hidden sm:inline-flex items-center gap-1"
+                >
+                  Ver todos <ChevronRight size={12} />
+                </button>
+              )}
+            </div>
+
+            {investigacion.length === 0 ? (
+              <div className="text-center py-10 px-4">
+                <p className="text-sm text-text-secondary font-medium">Próximamente</p>
+                <p className="text-xs text-text-muted mt-2 max-w-md mx-auto">
+                  Estamos preparando los primeros reportajes de investigación. Cada caso pasa por verificación documental
+                  exhaustiva antes de publicarse.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {investigacion.slice(0, 4).map(news => (
+                  <NewsCard key={news.id} news={news} onSelectNews={selectNews} variant="investigation" />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
 
         {tecnologia.length > 0 && (
           <section className="px-4 sm:px-6 lg:px-8 mt-12">

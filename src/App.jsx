@@ -116,9 +116,25 @@ function ShareButtons({ news, size = 'sm' }) {
   const url = `https://contextoclaro.com${buildArticlePath(news.id, news.title)}`
   const text = encodeURIComponent(news.title)
 
+  // window.open con dimensiones (width=,height=) abre popup en desktop pero
+  // mobile lo trata como noopener/blockea. Sin dimensiones = navegación nueva tab.
+  const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
+
   const share = (method, link) => {
     trackShareClick(news.id, method)
-    window.open(link, '_blank', 'width=600,height=400')
+    if (isMobile) {
+      window.open(link, '_blank', 'noopener,noreferrer')
+    } else {
+      window.open(link, '_blank', 'noopener,noreferrer,width=600,height=400')
+    }
+  }
+
+  const nativeShare = async (e) => {
+    e.stopPropagation()
+    trackShareClick(news.id, 'native')
+    try {
+      await navigator.share({ title: news.title, text: news.title, url })
+    } catch { /* user canceled */ }
   }
 
   const copyLink = (e) => {
@@ -134,14 +150,29 @@ function ShareButtons({ news, size = 'sm' }) {
     ? 'w-6 h-6 rounded-md text-text-muted hover:text-accent hover:bg-accent/10'
     : 'w-8 h-8 rounded-lg text-text-muted hover:text-accent hover:bg-accent/10'
 
+  const hasNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+
   return (
     <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-      <button onClick={(e) => { e.stopPropagation(); share('whatsapp', `https://wa.me/?text=${text}%20${encodeURIComponent(url)}`) }} className={`${btnClass} flex items-center justify-center transition-colors`} title="WhatsApp">
-        <MessageCircle size={iconSize} />
-      </button>
-      <button onClick={(e) => { e.stopPropagation(); share('twitter', `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`) }} className={`${btnClass} flex items-center justify-center transition-colors`} title="X (Twitter)">
-        <ExternalLink size={iconSize} />
-      </button>
+      {hasNativeShare && isMobile ? (
+        <button
+          onClick={nativeShare}
+          className={`${btnClass} flex items-center justify-center transition-colors`}
+          title="Compartir"
+          aria-label="Compartir"
+        >
+          <Share2 size={iconSize} />
+        </button>
+      ) : (
+        <>
+          <button onClick={(e) => { e.stopPropagation(); share('whatsapp', `https://wa.me/?text=${text}%20${encodeURIComponent(url)}`) }} className={`${btnClass} flex items-center justify-center transition-colors`} title="WhatsApp">
+            <MessageCircle size={iconSize} />
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); share('twitter', `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`) }} className={`${btnClass} flex items-center justify-center transition-colors`} title="X (Twitter)">
+            <ExternalLink size={iconSize} />
+          </button>
+        </>
+      )}
       <button onClick={copyLink} className={`${btnClass} flex items-center justify-center transition-colors`} title={copied ? '¡Copiado!' : 'Copiar link'}>
         {copied ? <CheckCircle size={iconSize} className="text-success" /> : <Copy size={iconSize} />}
       </button>
@@ -1656,6 +1687,93 @@ function SearchResultsView({ query, onClose, onSelectNews, headerProps }) {
   )
 }
 
+/* ═══════════════ MOBILE SEARCH OVERLAY ═══════════════ */
+
+function MobileSearchOverlay({ open, onClose, onSelectNews, onSearch }) {
+  const { query, setQuery, results, searching } = useNewsSearch()
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden'
+      setTimeout(() => inputRef.current?.focus(), 50)
+    } else {
+      document.body.style.overflow = ''
+      setQuery('')
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [open, setQuery])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
+  if (!open) return null
+
+  const submit = () => {
+    if (query.trim().length >= 2) {
+      onSearch?.(query.trim())
+      onClose()
+    }
+  }
+
+  const pick = (id) => {
+    onSelectNews?.(id)
+    onClose()
+  }
+
+  return (
+    <div className="sm:hidden fixed inset-0 z-[9999] bg-base flex flex-col fade-in" role="dialog" aria-modal="true" aria-label="Buscar noticias">
+      <div className="sticky top-0 z-10 glass-strong border-b border-border px-3 py-3 flex items-center gap-2">
+        <button onClick={onClose} aria-label="Cerrar búsqueda" className="p-2 -ml-1 text-text-secondary hover:text-accent">
+          <ChevronRight size={20} className="rotate-180" />
+        </button>
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+          <input
+            ref={inputRef}
+            type="search"
+            inputMode="search"
+            enterKeyHint="search"
+            placeholder="Buscar noticias…"
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); if (e.target.value.length >= 3) trackSearch(e.target.value, results?.length || 0) }}
+            onKeyDown={(e) => { if (e.key === 'Enter') submit() }}
+            className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-surface border border-border text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20"
+          />
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto px-3 py-3">
+        {query.length < 2 ? (
+          <p className="text-center text-xs text-text-muted py-12">Escribe al menos 2 caracteres para buscar</p>
+        ) : searching ? (
+          <p className="text-center text-xs text-text-muted py-12 pulse-soft">Buscando…</p>
+        ) : results.length === 0 ? (
+          <p className="text-center text-xs text-text-muted py-12">Sin resultados para &quot;{query}&quot;</p>
+        ) : (
+          <>
+            {results.map((item) => (
+              <button key={item.id} onClick={() => pick(item.id)} className="w-full text-left p-3 rounded-lg hover:bg-surface border-b border-border last:border-0 transition-colors">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs">{item.country}</span>
+                  <span className="text-[10px] text-text-muted bg-surface px-1.5 py-0.5 rounded">{item.category}</span>
+                </div>
+                <p className="text-sm font-medium leading-snug">{item.title}</p>
+              </button>
+            ))}
+            <button onClick={submit} className="w-full mt-3 py-3 text-center text-xs text-accent font-semibold rounded-lg hover:bg-accent-muted transition-colors">
+              Ver todos los resultados para &quot;{query}&quot;
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /* ═══════════════ MAIN APP ═══════════════ */
 
 export default function App() {
@@ -1669,6 +1787,7 @@ export default function App() {
   const [showMethodology, setShowMethodology] = useState(() => window.location.pathname === '/metodologia')
   const [showConsumption, setShowConsumption] = useState(() => window.location.pathname === '/mi-consumo')
   const [showFactCheck, setShowFactCheck] = useState(() => window.location.pathname === '/verificaciones')
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const handleCountryChange = (code) => { trackCountryFilter(code); setCountryCode(code) }
   const { hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, catPolitica, catEconomia, catDeportes, catTecnologia, catInvestigacion, loading, error } = useNewsSections(countryCode)
   const norm = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
@@ -1853,6 +1972,7 @@ export default function App() {
         </Suspense>
         <Footer onAboutClick={openAbout} />
         <Suspense fallback={null}><AccessibilityWidget /></Suspense>
+        <MobileSearchOverlay open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} onSelectNews={selectNews} onSearch={(q) => setSearchQuery(q)} />
       </div>
     )
   }
@@ -1881,10 +2001,11 @@ export default function App() {
           onTabChange={(tab) => {
             if (tab === 'home') { setShowConsumption(false); window.history.pushState({}, '', '/') }
             else if (tab === 'factcheck') openFactCheck()
-            else if (tab === 'search') document.querySelector('input[type=search],input[placeholder*="Buscar"],input[placeholder*="buscar"]')?.focus()
+            else if (tab === 'search') setMobileSearchOpen(true)
           }}
         />
         <Suspense fallback={null}><AccessibilityWidget /></Suspense>
+        <MobileSearchOverlay open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} onSelectNews={selectNews} onSearch={(q) => setSearchQuery(q)} />
       </div>
     )
   }
@@ -1899,11 +2020,12 @@ export default function App() {
           activeTab="factcheck"
           onTabChange={(tab) => {
             if (tab === 'home') { setShowFactCheck(false); window.history.pushState({}, '', '/') }
-            else if (tab === 'search') { setShowFactCheck(false); document.querySelector('input[type=search],input[placeholder*="Buscar"]')?.focus() }
+            else if (tab === 'search') { setShowFactCheck(false); setMobileSearchOpen(true) }
             else if (tab === 'consumption') openConsumption()
           }}
         />
         <Suspense fallback={null}><AccessibilityWidget /></Suspense>
+        <MobileSearchOverlay open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} onSelectNews={selectNews} onSearch={(q) => setSearchQuery(q)} />
       </div>
     )
   }
@@ -1965,12 +2087,13 @@ export default function App() {
           activeTab="home"
           onTabChange={(tab) => {
             if (tab === 'home') { setShowAllNews(false); setVisibleCount(24); window.history.pushState({}, '', '/') }
-            else if (tab === 'search') document.querySelector('input[type=search],input[placeholder*="Buscar"],input[placeholder*="buscar"]')?.focus()
+            else if (tab === 'search') setMobileSearchOpen(true)
             else if (tab === 'factcheck') openFactCheck()
             else if (tab === 'consumption') openConsumption()
           }}
         />
         <Suspense fallback={null}><AccessibilityWidget /></Suspense>
+        <MobileSearchOverlay open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} onSelectNews={selectNews} onSearch={(q) => setSearchQuery(q)} />
       </div>
     )
   }
@@ -2245,12 +2368,13 @@ export default function App() {
       <BottomNav
         activeTab="home"
         onTabChange={(tab) => {
-          if (tab === 'search') document.querySelector('input[type=search],input[placeholder*="Buscar"],input[placeholder*="buscar"]')?.focus()
+          if (tab === 'search') setMobileSearchOpen(true)
           else if (tab === 'factcheck') openFactCheck()
           else if (tab === 'consumption') openConsumption()
         }}
       />
       <AccessibilityWidget />
+      <MobileSearchOverlay open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} onSelectNews={selectNews} onSearch={(q) => setSearchQuery(q)} />
     </div>
   )
 }

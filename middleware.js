@@ -43,13 +43,16 @@ export default async function middleware(req) {
   }
 
   // Para HUMANOS: añade Link header con preload del hero image (LCP boost).
-  // Usa next() de @vercel/edge para pass-through con headers extra.
+  // Si Supabase no responde en 2s, devolvemos directamente sin headers (SPA carga normal).
   if (path === '/') {
     try {
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 2000)
       const res = await fetch(
         `${SUPABASE_URL}/rest/v1/news?select=image&country_code=in.(VE,CO,TECH)&image=not.is.null&order=published_at.desc&limit=1`,
-        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }, signal: ctrl.signal },
       )
+      clearTimeout(timer)
       const data = await res.json()
       const heroImage = data?.[0]?.image
       if (heroImage) {
@@ -59,16 +62,19 @@ export default async function middleware(req) {
           },
         })
       }
-    } catch { /* fallthrough — el SPA carga normal */ }
+    } catch { /* fallthrough — el SPA carga normal sin preload header */ }
   }
 }
 
 async function renderHome(url) {
   try {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), 4000)
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/news?select=id,title,description,image,category,country,country_code,gemini_verdict,gemini_confidence,source_count,published_at,bias_label&country_code=in.(VE,CO,TECH)&order=published_at.desc&limit=30`,
-      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }, signal: ctrl.signal }
     )
+    clearTimeout(timer)
     const articles = await res.json()
     if (!Array.isArray(articles) || !articles.length) return
 
@@ -185,20 +191,23 @@ ${articleItems}
 
 async function renderArticle(url, newsId) {
   try {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), 5000)
     const [newsRes, paragraphsRes, sourcesRes] = await Promise.all([
       fetch(
         `${SUPABASE_URL}/rest/v1/news?id=eq.${newsId}&select=id,title,description,image,category,country,country_code,gemini_verdict,gemini_confidence,gemini_reasoning,score_factual,score_source_div,score_transparency,score_independence,source_count,author,read_time,published_at,bias_label`,
-        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }, signal: ctrl.signal }
       ),
       fetch(
         `${SUPABASE_URL}/rest/v1/article_paragraphs?news_id=eq.${newsId}&select=content,sort_order&order=sort_order.asc`,
-        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }, signal: ctrl.signal }
       ),
       fetch(
         `${SUPABASE_URL}/rest/v1/news_sources?news_id=eq.${newsId}&select=name,bias,credibility,stance&order=sort_order.asc`,
-        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }, signal: ctrl.signal }
       ),
     ])
+    clearTimeout(timer)
 
     const [newsData, paragraphs, sources] = await Promise.all([
       newsRes.json(), paragraphsRes.json(), sourcesRes.json(),

@@ -63,7 +63,9 @@ async function resolveTweetMedia(slug) {
   } catch { return null }
 }
 
-// Componente que embebe el media resuelto de un tweet
+// Componente que embebe el media resuelto de un tweet.
+// El endpoint puede fallar (Twitter bloquea IP datacenters en 2026) — en ese
+// caso mostramos una tarjeta-CTA prominente con vista previa al tweet.
 function TweetMediaEmbed({ slug }) {
   const [state, setState] = useState({ status: 'loading', data: null })
   useEffect(() => {
@@ -75,46 +77,56 @@ function TweetMediaEmbed({ slug }) {
     return () => { mounted = false }
   }, [slug])
 
-  if (state.status === 'loading') {
-    return <div className="my-3 h-44 rounded-lg bg-surface/60 animate-pulse" />
-  }
-  if (state.status === 'failed' || !state.data?.media?.length) {
+  // Si el resolve fue exitoso, embeber media inline directamente
+  if (state.status === 'ready') {
+    const { media, user, tweet_id } = state.data
     return (
-      <a href={`https://pic.twitter.com/${slug}`} target="_blank" rel="noopener noreferrer"
-         className="inline-flex items-center gap-1 text-accent hover:text-accent-light underline-offset-2 hover:underline text-sm my-2">
-        <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true">
-          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-        </svg>
-        <span>Ver en X</span>
-      </a>
+      <div className="my-3 space-y-2">
+        {media.map((m, i) => (
+          m.type === 'photo' ? (
+            <a key={i} href={`https://x.com/${user}/status/${tweet_id}`} target="_blank" rel="noopener noreferrer" className="block">
+              <img src={m.url} alt="" loading="lazy" className="w-full rounded-lg border border-border" />
+            </a>
+          ) : (
+            <video key={i} controls preload="metadata" poster={m.poster}
+                   className="w-full rounded-lg border border-border bg-black"
+                   playsInline>
+              <source src={m.url} type="video/mp4" />
+            </video>
+          )
+        ))}
+        {user && (
+          <a href={`https://x.com/${user}/status/${tweet_id}`} target="_blank" rel="noopener noreferrer"
+             className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-accent">
+            <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor" aria-hidden="true">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            <span>Ver tweet original</span>
+          </a>
+        )}
+      </div>
     )
   }
-  const { media, user, tweet_id } = state.data
+
+  // Fallback (loading o failed): tarjeta CTA estética que invita a ver el media
   return (
-    <div className="my-3 space-y-2">
-      {media.map((m, i) => (
-        m.type === 'photo' ? (
-          <a key={i} href={`https://x.com/${user}/status/${tweet_id}`} target="_blank" rel="noopener noreferrer" className="block">
-            <img src={m.url} alt="" loading="lazy" className="w-full rounded-lg border border-border" />
-          </a>
-        ) : (
-          <video key={i} controls preload="metadata" poster={m.poster}
-                 className="w-full rounded-lg border border-border bg-black"
-                 playsInline>
-            <source src={m.url} type="video/mp4" />
-          </video>
-        )
-      ))}
-      {user && (
-        <a href={`https://x.com/${user}/status/${tweet_id}`} target="_blank" rel="noopener noreferrer"
-           className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-accent">
-          <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor" aria-hidden="true">
+    <a href={`https://pic.twitter.com/${slug}`} target="_blank" rel="noopener noreferrer"
+       className="block my-3 group">
+      <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-base/60 hover:bg-accent/5 hover:border-accent/40 transition-colors">
+        <div className="w-10 h-10 rounded-lg bg-black flex items-center justify-center shrink-0">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="white" aria-hidden="true">
             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
           </svg>
-          <span>Ver tweet original</span>
-        </a>
-      )}
-    </div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-text-primary">Foto/video en X</p>
+          <p className="text-[11px] text-text-muted truncate">pic.twitter.com/{slug}</p>
+        </div>
+        <span className="text-[11px] font-semibold text-accent group-hover:translate-x-0.5 transition-transform">
+          Ver →
+        </span>
+      </div>
+    </a>
   )
 }
 

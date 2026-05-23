@@ -302,14 +302,24 @@ export async function fetchArticleDetail(newsId) {
     const hasMedia = !!(p.media_url && p.media_type)
 
     if (rawText && rawText.length > 5 && !rawText.startsWith('http')) {
-      const fixed = rawText
+      let fixed = rawText
         .replace(/&nbsp;/g, ' ')
         .replace(/\u00a0/g, ' ')
         .replace(/\s{2,}/g, ' ')
 
+      // Si este p\u00e1rrafo ya tiene media resuelto (vino del script de
+      // backfill twitter), quitar el "pic.twitter.com/..." del texto
+      // para no duplicar el embed visual.
+      if (hasMedia) {
+        fixed = fixed.replace(/\s*pic\.twitter\.com\/[A-Za-z0-9]+/g, '').trim()
+        if (fixed.length < 5) fixed = '' // si qued\u00f3 solo el slug
+      }
+
       // Detect editorial section headers: "EL CONTEXTO — texto..." → heading + text
       const headingMatch = fixed.match(/^([A-ZÁÉÍÓÚÑ ]{3,40})\s*[—–-]\s*(.+)$/)
-      if (headingMatch) {
+      if (!fixed) {
+        // texto eliminado por completo tras limpieza
+      } else if (headingMatch) {
         blocks.push({ kind: 'heading', text: headingMatch[1].trim() })
         blocks.push({ kind: 'text', text: headingMatch[2].trim() })
       } else if (hasMedia) {

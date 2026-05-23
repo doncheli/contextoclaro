@@ -868,6 +868,11 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* ═══════════════ BOTTOM NAV ═══════════════ */
+.bottom-nav-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* ═══════════════ BREAKING NEWS ═══════════════ */
 @keyframes breakingPulse {
   0%, 100% { opacity: 1; }
@@ -882,4 +887,35 @@ h1, h2, h3, h4, h5, h6 {
 }
 .breaking-scroll {
   animation: breakingSlide 20s linear infinite;
+}
+
+/* Seamless infinite ticker for BreakingBanner (duplicated items + translateX(-50%)) */
+.bb-ticker-wrap {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%);
+}
+@keyframes bbTickerScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.bb-ticker {
+  animation: bbTickerScroll 40s linear infinite;
+}
+.bb-ticker:hover {
+  animation-play-state: paused;
+}
+
+/* Hide scrollbar but keep scrollable — used by CategoryChipRow */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bb-ticker, .breaking-scroll {
+    animation: none;
+  }
 }

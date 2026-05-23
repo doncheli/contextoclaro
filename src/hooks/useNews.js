@@ -13,12 +13,37 @@ import {
   fetchSiteStats,
 } from '../lib/newsService'
 
+const CACHE_TTL_MS = 5 * 60 * 1000
+const CACHE_PREFIX = 'cc_cache_v1_'
+
+function readCache(key) {
+  try {
+    const raw = localStorage.getItem(CACHE_PREFIX + key)
+    if (!raw) return null
+    const { ts, data } = JSON.parse(raw)
+    if (Date.now() - ts > CACHE_TTL_MS) return null
+    return data
+  } catch { return null }
+}
+
+function writeCache(key, data) {
+  try {
+    localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({ ts: Date.now(), data }))
+  } catch { /* quota or private mode */ }
+}
+
 /**
- * Carga todas las secciones de noticias en paralelo.
- * Acepta countryCode para filtrar por país.
+ * Carga progresiva en dos fases:
+ *   Fase 1 (bloquea spinner): hero, daily, feed, stats — ~400-800ms
+ *   Fase 2 (background, no bloquea): blindspot, flagged, sponsored, allNews, categorías
+ *
+ * Cache localStorage TTL 5min hace el segundo paint instantáneo.
  */
 export function useNewsSections(countryCode = 'ALL') {
-  const [sections, setSections] = useState({
+  const cacheKey = `sections_${countryCode}`
+  const cached = typeof window !== 'undefined' ? readCache(cacheKey) : null
+
+  const [sections, setSections] = useState(cached || {
     hero: null,
     daily: [],
     blindspot: [],
@@ -26,65 +51,73 @@ export function useNewsSections(countryCode = 'ALL') {
     flagged: [],
     sponsored: [],
     allNews: [],
+    stats: null,
+    catPolitica: [],
+    catEconomia: [],
+    catDeportes: [],
+    catTecnologia: [],
   })
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!cached)
   const [error, setError] = useState(null)
   const mountedRef = useRef(true)
 
-  const loadData = useCallback(async () => {
-    try {
-      const [hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, catPolitica, catEconomia, catDeportes, catTecnologia] = await Promise.all([
-        fetchHeroNews(countryCode),
-        fetchDailyNews(countryCode),
-        fetchBlindspotNews(countryCode),
-        fetchFeedNews(countryCode),
-        fetchFlaggedNews(countryCode),
-        fetchSponsoredNews(countryCode),
-        fetchAllNews(countryCode),
-        fetchSiteStats(countryCode),
-        fetchNewsByCategory('olític', countryCode),
-        fetchNewsByCategory('conomí', countryCode),
-        fetchNewsByCategory('eporte', countryCode),
-        fetchNewsByCategory('ecnolog', countryCode),
-      ])
+  const loadCritical = useCallback(async () => {
+    const [hero, daily, feed, stats] = await Promise.all([
+      fetchHeroNews(countryCode),
+      fetchDailyNews(countryCode),
+      fetchFeedNews(countryCode),
+      fetchSiteStats(countryCode),
+    ])
+    if (!mountedRef.current) return null
+    const heroSlides = hero.length > 0 ? hero : daily.slice(0, 3).concat(feed.slice(0, 3)).slice(0, 3)
+    return { hero: heroSlides, daily, feed, stats }
+  }, [countryCode])
 
-      if (!mountedRef.current) return
-
-      const heroSlides = hero.length > 0 ? hero : daily.slice(0, 3).concat(feed.slice(0, 3)).slice(0, 3)
-
-      setSections({
-        hero: heroSlides,
-        daily,
-        blindspot,
-        feed,
-        flagged,
-        sponsored,
-        allNews,
-        stats,
-        catPolitica,
-        catEconomia,
-        catDeportes,
-        catTecnologia,
-      })
-      setError(null)
-    } catch (err) {
-      if (mountedRef.current) {
-        setError(err.message || 'Error al cargar noticias')
-      }
-    } finally {
-      if (mountedRef.current) {
-        setLoading(false)
-      }
-    }
+  const loadDeferred = useCallback(async () => {
+    const [blindspot, flagged, sponsored, allNews, catPolitica, catEconomia, catDeportes, catTecnologia] = await Promise.all([
+      fetchBlindspotNews(countryCode),
+      fetchFlaggedNews(countryCode),
+      fetchSponsoredNews(countryCode),
+      fetchAllNews(countryCode),
+      fetchNewsByCategory('olític', countryCode),
+      fetchNewsByCategory('conomí', countryCode),
+      fetchNewsByCategory('eporte', countryCode),
+      fetchNewsByCategory('ecnolog', countryCode),
+    ])
+    if (!mountedRef.current) return null
+    return { blindspot, flagged, sponsored, allNews, catPolitica, catEconomia, catDeportes, catTecnologia }
   }, [countryCode])
 
   useEffect(() => {
     mountedRef.current = true
-    setLoading(true)
-    loadData()
+    let intervalId = null
 
-    // Refresh stats every 5 minutes
-    const interval = setInterval(async () => {
+    ;(async () => {
+      try {
+        if (!cached) setLoading(true)
+
+        const critical = await loadCritical()
+        if (!mountedRef.current || !critical) return
+        setSections(prev => ({ ...prev, ...critical }))
+        setError(null)
+        setLoading(false)
+
+        const deferred = await loadDeferred()
+        if (!mountedRef.current || !deferred) return
+        setSections(prev => {
+          const merged = { ...prev, ...deferred }
+          writeCache(cacheKey, merged)
+          return merged
+        })
+      } catch (err) {
+        if (mountedRef.current) {
+          setError(err.message || 'Error al cargar noticias')
+          setLoading(false)
+        }
+      }
+    })()
+
+    intervalId = setInterval(async () => {
       try {
         const freshStats = await fetchSiteStats(countryCode)
         if (mountedRef.current && freshStats) {
@@ -93,8 +126,8 @@ export function useNewsSections(countryCode = 'ALL') {
       } catch { /* silent */ }
     }, 5 * 60 * 1000)
 
-    return () => { mountedRef.current = false; clearInterval(interval) }
-  }, [loadData])
+    return () => { mountedRef.current = false; if (intervalId) clearInterval(intervalId) }
+  }, [countryCode, cacheKey, loadCritical, loadDeferred])
 
   return { ...sections, loading, error }
 }

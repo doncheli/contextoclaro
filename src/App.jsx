@@ -17,6 +17,12 @@ import InstagramCardsPage from './components/InstagramCards'
 import NewsletterForm from './components/NewsletterForm'
 import SocialCard from './components/SocialCard'
 import AccessibilityWidget from './components/AccessibilityWidget'
+import Onboarding from './components/Onboarding'
+import BottomNav from './components/BottomNav'
+import FactCheckDashboard from './components/FactCheckDashboard'
+import ScoreBadge from './components/ScoreBadge'
+import GeminiBadge from './components/GeminiBadge'
+import BreakingBanner from './components/BreakingBanner'
 import {
   trackCountryFilter, trackSearch, trackSectionView,
   trackFakeNewsAlertView, trackSponsoredAlertView, trackAdImpression, trackShareClick
@@ -93,33 +99,6 @@ const COUNTRIES = [
   { code: 'TECH', name: 'Tecnología', emoji: '🌐' },
 ]
 
-/* ═══════════════ BREAKING NEWS BANNER ═══════════════ */
-
-function BreakingNewsBanner({ flagged, onSelectNews }) {
-  const breaking = flagged.filter(n => n.geminiVerdict === 'fake' || n.geminiVerdict === 'misleading').slice(0, 3)
-  if (breaking.length === 0) return null
-
-  return (
-    <div className="bg-danger/90 text-white relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center gap-3">
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="w-2 h-2 rounded-full bg-white breaking-dot" />
-          <span className="text-[11px] font-bold tracking-wider uppercase">Alerta</span>
-        </div>
-        <div className="flex-1 overflow-hidden">
-          <div className="flex items-center gap-6 breaking-scroll whitespace-nowrap">
-            {breaking.map(news => (
-              <button key={news.id} onClick={() => onSelectNews(news.id)} className="text-xs font-medium hover:underline shrink-0">
-                {news.geminiVerdict === 'fake' ? '🚨 FALSA: ' : '⚠️ ENGAÑOSA: '}{news.title}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 /* ═══════════════ SHARE BUTTONS ═══════════════ */
 
 function ShareButtons({ news, size = 'sm' }) {
@@ -162,21 +141,6 @@ function ShareButtons({ news, size = 'sm' }) {
 
 /* ═══════════════ SHARED COMPONENTS ═══════════════ */
 
-function ScoreBadge({ score, size = "md" }) {
-  const s = Number(score) || 0
-  const color = s >= 8
-    ? 'bg-success text-white'
-    : s >= 5
-      ? 'bg-warning text-white'
-      : 'bg-danger text-white'
-  const dim = size === "sm" ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm"
-  return (
-    <span className={`${dim} ${color} rounded-full flex items-center justify-center font-bold shrink-0 shadow-sm`}>
-      {s.toFixed(1)}
-    </span>
-  )
-}
-
 function VerifiedPill({ veracity }) {
   const config = {
     verificada: { bg: "bg-success-muted", text: "text-success", label: "Verificada" },
@@ -188,25 +152,6 @@ function VerifiedPill({ veracity }) {
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${c.bg} backdrop-blur-sm`}>
       <CheckCircle size={12} className={c.text} />
       <span className={c.text}>{c.label}</span>
-    </span>
-  )
-}
-
-function GeminiBadge({ verdict, confidence }) {
-  if (!verdict) return null
-  const config = {
-    real: { icon: ShieldCheck, color: 'text-success', bg: 'bg-success-muted', label: 'IA: Real' },
-    misleading: { icon: ShieldAlert, color: 'text-warning', bg: 'bg-warning-muted', label: 'IA: Engañosa' },
-    fake: { icon: ShieldX, color: 'text-danger', bg: 'bg-danger-muted', label: 'IA: Falsa' },
-    unverified: { icon: ShieldQuestion, color: 'text-text-muted', bg: 'bg-surface', label: 'IA: Sin verificar' },
-  }
-  const c = config[verdict] || config.unverified
-  const Icon = c.icon
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold ${c.bg}`}>
-      <Icon size={12} className={c.color} />
-      <span className={c.color}>{c.label}</span>
-      {confidence > 0 && <span className="text-text-muted ml-0.5">{confidence}%</span>}
     </span>
   )
 }
@@ -532,69 +477,75 @@ function HeroSection({ news: heroNews, onSelectNews }) {
       onBlur={() => setPaused(false)}
     >
       <div className="relative">
-        <div
-          className="card overflow-hidden cursor-pointer group"
+        <article
+          className="relative w-full h-[400px] sm:h-[460px] lg:h-[520px] rounded-xl overflow-hidden cursor-pointer group border border-border shadow-lg"
           onClick={() => onSelectNews(news.id)}
           role="group"
           aria-roledescription="slide"
           aria-label={`Noticia ${active + 1} de ${slides.length}: ${news.title}`}
         >
-          <div className="flex flex-col lg:flex-row">
-            {/* Image */}
-            <div className="relative lg:w-[50%] min-h-[220px] sm:min-h-[280px] lg:min-h-[380px] overflow-hidden">
-              <div className="absolute inset-0">
-                {slides.map((slide, i) => (
-                  <div
-                    key={slide.id}
-                    className={`absolute inset-0 transition-opacity duration-700 ${i === active ? 'opacity-100' : 'opacity-0'}`}
-                  >
-                    <NewsImage src={slide.image} alt={slide.title} news={slide} priority={i === 0} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" />
-                  </div>
-                ))}
+          {/* Background image (con crossfade entre slides) */}
+          <div className="absolute inset-0">
+            {slides.map((slide, i) => (
+              <div
+                key={slide.id}
+                className={`absolute inset-0 transition-opacity duration-700 ${i === active ? 'opacity-100' : 'opacity-0'}`}
+              >
+                <NewsImage
+                  src={slide.image}
+                  alt={slide.title}
+                  news={slide}
+                  priority={i === 0}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                />
               </div>
-              <div className="absolute inset-0 img-overlay lg:bg-gradient-to-r lg:from-transparent lg:via-transparent lg:to-card" />
-              {/* Category badge */}
-              <div className="absolute top-4 left-4 flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-base/70 backdrop-blur-sm text-text-primary border border-border">
-                  {news.category}
-                </span>
-                <span className="text-xl">{news.country}</span>
-              </div>
+            ))}
+          </div>
+
+          {/* Dark gradient overlay (estilo Stitch) */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/70 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0c1220]/40 via-transparent to-transparent pointer-events-none" />
+
+          {/* Top row: category + country (left) · score + verdict (right) */}
+          <div className="absolute top-4 left-4 right-4 flex items-start justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-2.5 py-1 rounded-full bg-card/80 backdrop-blur text-[11px] font-bold tracking-wider uppercase border border-border text-text-primary">
+                {news.country} {news.category?.split(' · ').slice(-1)[0] || news.category}
+              </span>
             </div>
-
-            {/* Content */}
-            <div className="flex-1 p-6 sm:p-8 flex flex-col justify-center">
-              <div className="flex flex-wrap items-center gap-2 mb-4">
-                <VerifiedPill veracity={news.veracity} />
-                <GeminiBadge verdict={news.geminiVerdict} confidence={news.geminiConfidence} />
-              </div>
-
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold leading-tight mb-3 font-heading group-hover:text-accent-light transition-colors hero-text-transition">
-                {news.title}
-              </h2>
-              <p className="text-sm text-text-secondary leading-relaxed mb-5 line-clamp-3 hero-text-transition">
-                {news.description}
-              </p>
-
-              {/* Bias bar */}
-              {news.bias && (
-                <div className="mb-5 max-w-sm">
-                  <BiasBar left={news.bias.left} center={news.bias.center} right={news.bias.right} />
-                </div>
+            <div className="flex items-center gap-2">
+              {(news.score_factual != null || news.sourceCount > 0) && (
+                <ScoreBadge score={computeScore(news)} variant="glass" />
               )}
-
-              {/* Sources + read more */}
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-accent flex items-center gap-1.5">
-                  <Eye size={14} aria-hidden="true" /> {news.sourceCount} fuentes
-                </span>
-                <span className="text-xs text-text-muted">
-                  <ChevronRight size={12} className="inline" aria-hidden="true" /> Leer análisis completo
-                </span>
-              </div>
+              {news.geminiVerdict && (
+                <GeminiBadge verdict={news.geminiVerdict} variant="glass" size="lg" />
+              )}
             </div>
           </div>
-        </div>
+
+          {/* Bottom: title + description + meta */}
+          <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 flex flex-col gap-3">
+            <h2 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight group-hover:text-accent-light transition-colors hero-text-transition max-w-3xl">
+              {news.title}
+            </h2>
+            {news.description && (
+              <p className="text-sm sm:text-base text-text-secondary leading-relaxed line-clamp-2 max-w-2xl hero-text-transition">
+                {news.description}
+              </p>
+            )}
+            <div className="flex items-center gap-3 text-sm text-text-secondary font-medium pt-1 flex-wrap">
+              <span className="flex items-center gap-1.5 text-accent-light">
+                <Eye size={14} aria-hidden="true" /> {news.sourceCount} fuentes
+              </span>
+              <span className="w-1 h-1 rounded-full bg-text-muted" />
+              <span className="text-xs">{timeAgo(news.publishedAt)}</span>
+              <span className="w-1 h-1 rounded-full bg-text-muted hidden sm:inline-block" />
+              <span className="text-xs hidden sm:inline-flex items-center gap-1">
+                <ChevronRight size={12} aria-hidden="true" /> Leer análisis completo
+              </span>
+            </div>
+          </div>
+        </article>
 
         {/* Carousel indicators */}
         {slides.length > 1 && (
@@ -1653,6 +1604,8 @@ export default function App() {
   const [showAbout, setShowAbout] = useState(() => window.location.pathname === '/acerca-de')
   const [showMethodology, setShowMethodology] = useState(() => window.location.pathname === '/metodologia')
   const [showConsumption, setShowConsumption] = useState(() => window.location.pathname === '/mi-consumo')
+  const [showFactCheck, setShowFactCheck] = useState(() => window.location.pathname === '/verificaciones')
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('cc_onboarded'))
   const handleCountryChange = (code) => { trackCountryFilter(code); setCountryCode(code) }
   const { hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, catPolitica, catEconomia, catDeportes, catTecnologia, loading, error } = useNewsSections(countryCode)
   const norm = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
@@ -1739,8 +1692,21 @@ export default function App() {
     setSelectedNewsId(null)
     setShowAbout(false)
     setShowMethodology(false)
+    setShowFactCheck(false)
     setSearchQuery(null)
     setVisibleCount(24)
+    window.scrollTo({ top: 0 })
+  }, [])
+
+  const openFactCheck = useCallback(() => {
+    setShowFactCheck(true)
+    setShowAbout(false)
+    setShowMethodology(false)
+    setShowConsumption(false)
+    setSelectedNewsId(null)
+    setShowAllNews(false)
+    setSearchQuery(null)
+    window.history.pushState({ page: 'factcheck' }, '', '/verificaciones')
     window.scrollTo({ top: 0 })
   }, [])
 
@@ -1751,6 +1717,7 @@ export default function App() {
     onSearch: handleSearch,
     onAboutClick: openAbout,
     onConsumptionClick: openConsumption,
+    onFactCheckClick: openFactCheck,
     onCategoryFilter: filterByCategory,
   }
 
@@ -1760,6 +1727,7 @@ export default function App() {
       setShowAbout(page === 'about')
       setShowMethodology(page === 'methodology')
       setShowConsumption(page === 'consumption')
+      setShowFactCheck(page === 'factcheck')
       setSearchQuery(null)
       if (event.state?.articleId) {
         setSelectedNewsId(event.state.articleId)
@@ -1804,6 +1772,10 @@ export default function App() {
     return <SocialCard newsId={cardId} />
   }
 
+  if (showOnboarding) {
+    return <Onboarding onComplete={() => setShowOnboarding(false)} />
+  }
+
   if (loading) return <LoadingSkeleton />
   if (error) return <ErrorState message={error} />
   if (!hero) return <ErrorState message="No se encontraron noticias" />
@@ -1832,7 +1804,7 @@ export default function App() {
     return (
       <div className="gradient-bg" lang="es">
         <Header onLogoClick={() => { setShowConsumption(false); window.history.pushState({}, '', '/') }} {...headerProps} />
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-28 sm:pb-12">
           <div className="text-center mb-10">
             <div className="w-14 h-14 rounded-2xl bg-accent/15 border border-accent/20 flex items-center justify-center mx-auto mb-4">
               <BarChart3 size={28} className="text-accent" />
@@ -1843,6 +1815,34 @@ export default function App() {
           <MyConsumptionDashboard />
         </main>
         <Footer onAboutClick={openAbout} />
+        <BottomNav
+          activeTab="consumption"
+          onTabChange={(tab) => {
+            if (tab === 'home') { setShowConsumption(false); window.history.pushState({}, '', '/') }
+            else if (tab === 'factcheck') openFactCheck()
+            else if (tab === 'search') document.querySelector('input[type=search],input[placeholder*="Buscar"],input[placeholder*="buscar"]')?.focus()
+          }}
+        />
+        <AccessibilityWidget />
+      </div>
+    )
+  }
+
+  if (showFactCheck) {
+    return (
+      <div className="gradient-bg" lang="es">
+        <Header onLogoClick={() => { setShowFactCheck(false); window.history.pushState({}, '', '/') }} {...headerProps} />
+        <FactCheckDashboard flagged={flagged} stats={stats} onSelectNews={selectNews} />
+        <Footer onAboutClick={openAbout} />
+        <BottomNav
+          activeTab="factcheck"
+          onTabChange={(tab) => {
+            if (tab === 'home') { setShowFactCheck(false); window.history.pushState({}, '', '/') }
+            else if (tab === 'search') { setShowFactCheck(false); document.querySelector('input[type=search],input[placeholder*="Buscar"]')?.focus() }
+            else if (tab === 'consumption') openConsumption()
+          }}
+        />
+        <AccessibilityWidget />
       </div>
     )
   }
@@ -1900,6 +1900,15 @@ export default function App() {
           )}
         </main>
         <Footer onAboutClick={openAbout} />
+        <BottomNav
+          activeTab="home"
+          onTabChange={(tab) => {
+            if (tab === 'home') { setShowAllNews(false); setVisibleCount(24); window.history.pushState({}, '', '/') }
+            else if (tab === 'search') document.querySelector('input[type=search],input[placeholder*="Buscar"],input[placeholder*="buscar"]')?.focus()
+            else if (tab === 'factcheck') openFactCheck()
+            else if (tab === 'consumption') openConsumption()
+          }}
+        />
         <AccessibilityWidget />
       </div>
     )
@@ -1921,7 +1930,6 @@ export default function App() {
     <div className="gradient-bg" lang="es">
       <a href="#main-content" className="skip-link">Saltar al contenido principal</a>
       <Header onLogoClick={() => { setSearchQuery(null); closeArticle() }} {...headerProps} />
-      <BreakingNewsBanner flagged={flagged} onSelectNews={selectNews} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
         <p className="text-sm sm:text-base font-heading font-semibold tracking-wide">
@@ -1929,7 +1937,10 @@ export default function App() {
         </p>
       </div>
 
-      <main id="main-content" role="main" aria-label="Contenido principal" className="max-w-7xl mx-auto pb-8">
+      {/* Breaking News Banner — solo aparece si hay flagged */}
+      <BreakingBanner flagged={flagged} onSelect={selectNews} />
+
+      <main id="main-content" role="main" aria-label="Contenido principal" className="max-w-7xl mx-auto pb-24 sm:pb-8">
         {/* Hero Carousel */}
         <HeroSection news={hero} onSelectNews={selectNews} />
 
@@ -2117,6 +2128,14 @@ export default function App() {
       </main>
 
       <Footer onAboutClick={openAbout} />
+      <BottomNav
+        activeTab="home"
+        onTabChange={(tab) => {
+          if (tab === 'search') document.querySelector('input[type=search],input[placeholder*="Buscar"],input[placeholder*="buscar"]')?.focus()
+          else if (tab === 'factcheck') openFactCheck()
+          else if (tab === 'consumption') openConsumption()
+        }}
+      />
       <AccessibilityWidget />
     </div>
   )

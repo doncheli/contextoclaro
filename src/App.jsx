@@ -251,7 +251,7 @@ function SectionHeader({ title, subtitle, icon: Icon, onSeeMore }) {
  *
  * Las URLs propias (contextoclaro.com) y data: URIs se devuelven sin cambios.
  */
-function optimizeImageUrl(url, targetWidth = 600) {
+function optimizeImageUrl(url, targetWidth = 600, format = 'webp') {
   if (!url) return url
   // Skip URLs propias y data:
   if (url.startsWith('data:') || url.startsWith('/') || url.includes('contextoclaro.com/logo')) {
@@ -259,9 +259,18 @@ function optimizeImageUrl(url, targetWidth = 600) {
   }
   // Quitar protocolo para wsrv.nl
   const clean = url.replace(/^https?:\/\//, '')
-  // wsrv.nl proxy con WebP + resize
   const q = targetWidth >= 1000 ? 82 : 75
-  return `https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=${targetWidth}&output=webp&q=${q}&we`
+  return `https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=${targetWidth}&output=${format}&q=${q}&we`
+}
+
+// Genera srcset responsive para wsrv.nl con varios tamaños.
+// El navegador escoge la versión más cercana al display size + DPR.
+function srcSetFor(url, sizes = [400, 600, 800, 1200]) {
+  if (!url) return undefined
+  if (url.startsWith('data:') || url.startsWith('/') || url.includes('contextoclaro.com/logo')) {
+    return undefined
+  }
+  return sizes.map((w) => `${optimizeImageUrl(url, w, 'webp')} ${w}w`).join(', ')
 }
 
 function NewsImage({ src, alt, className = "", news, priority = false, width = 600, height }) {
@@ -294,9 +303,17 @@ function NewsImage({ src, alt, className = "", news, priority = false, width = 6
     )
   }
 
+  // srcset responsive — el navegador elige tamaño óptimo según DPR + viewport
+  const srcSet = src ? srcSetFor(src, priority ? [600, 900, 1200, 1600] : [320, 480, 640, 800]) : undefined
+  const sizes = priority
+    ? '(min-width: 1024px) 1200px, (min-width: 640px) 900px, 100vw'
+    : '(min-width: 1024px) 400px, (min-width: 640px) 50vw, 100vw'
+
   return (
     <img
       src={optimized}
+      srcSet={srcSet}
+      sizes={sizes}
       alt={alt}
       className={className}
       loading={priority ? "eager" : "lazy"}

@@ -120,14 +120,29 @@ async function fetchBalanced(buildQuery, countryCode, limit) {
  * Reemplaza 4-12 round-trips al backend. Crítico para mobile.
  */
 export async function fetchHomeFeed(countryCode = 'ALL') {
-  const { data, error } = await supabase
-    .rpc('get_home_feed', {
-      p_country: countryCode || 'ALL',
-      p_hero_limit: 4,
-      p_daily_limit: 20,
-      p_feed_limit: 30,
-    })
-  if (error) throw error
+  const country = countryCode || 'ALL'
+  let data = null
+
+  // Path A (rápido): edge cache en Vercel — ~30ms hit, ~300ms miss.
+  // Si falla por cualquier razón (deploy preview, error), caemos a Supabase directo.
+  try {
+    const url = `/api/home-feed?country=${encodeURIComponent(country)}&hero=4&daily=20&feed=30`
+    const resp = await fetch(url, { signal: AbortSignal.timeout(4000) })
+    if (resp.ok) data = await resp.json()
+  } catch { /* fallthrough */ }
+
+  // Path B (fallback): Supabase RPC directo.
+  if (!data) {
+    const { data: rpcData, error } = await supabase
+      .rpc('get_home_feed', {
+        p_country: country,
+        p_hero_limit: 4,
+        p_daily_limit: 20,
+        p_feed_limit: 30,
+      })
+    if (error) throw error
+    data = rpcData
+  }
   if (!data) return null
   return {
     hero: (data.hero || []).map(mapNewsRow),

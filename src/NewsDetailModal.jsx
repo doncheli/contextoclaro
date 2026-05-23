@@ -11,7 +11,7 @@ import CoverageMeter from './components/CoverageMeter'
 import { trackRead } from './lib/consumptionTracker'
 import NewsPoll from './components/NewsPoll'
 import NewsTriptych from './components/NewsTriptych'
-import Giscus from '@giscus/react'
+import Comments from './components/Comments'
 import {
   trackArticleView, trackArticleTimeSpent, trackVerificationView,
   trackSourcesClick, trackReturnToFeed, observeScrollDepth, resetScrollTracking, trackShareClick
@@ -741,26 +741,8 @@ export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) 
         {/* News Triptych — perspective comparison */}
         <NewsTriptych sources={detail.sources} />
 
-        {/* Comments — Giscus (GitHub Discussions) */}
-        <section className="mt-8">
-          <h2 className="text-lg font-bold font-heading mb-4">Comentarios</h2>
-          <Giscus
-            id={`giscus-news-${newsId}`}
-            repo="doncheli/contextoclaro"
-            repoId="R_kgDORp72Xw"
-            category="Announcements"
-            categoryId="DIC_kwDORp72X84C9pU7"
-            mapping="specific"
-            term={`news-${newsId}`}
-            strict="0"
-            reactionsEnabled="1"
-            emitMetadata="0"
-            inputPosition="top"
-            theme={document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark_dimmed'}
-            lang="es"
-            loading="lazy"
-          />
-        </section>
+        {/* Comments — Sistema propio en Supabase, estilo Disqus */}
+        <Comments newsId={newsId} />
 
         {/* Regional Context */}
         <RegionalContext

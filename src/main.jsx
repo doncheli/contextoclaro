@@ -3,10 +3,9 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 
-// Default to dark theme (matches Stitch design system)
-// Users can override via the AccessibilityWidget; persisted preference wins.
+// Default to light theme — preferencia del usuario, persistido en localStorage.
 const savedTheme = localStorage.getItem('cc_theme')
-document.documentElement.setAttribute('data-theme', savedTheme === 'light' ? 'light' : 'dark')
+document.documentElement.setAttribute('data-theme', savedTheme === 'dark' ? 'dark' : 'light')
 
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {

@@ -92,14 +92,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
     <noscript><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" /></noscript>
     <title>Contexto Claro — Filtramos el ruido. Entregamos la verdad.</title>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8704878719669732" crossorigin="anonymous"></script>
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PSMG5L90D1"></script>
+    <!-- 3rd party scripts (AdSense + GA) cargados DESPUÉS de load + idle para no bloquear FCP/TBT -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-PSMG5L90D1');
+      function loadDeferredScripts() {
+        const ric = window.requestIdleCallback || function(cb){ return setTimeout(cb, 1) };
+        ric(function() {
+          // Google Analytics
+          var ga = document.createElement('script');
+          ga.async = true;
+          ga.src = 'https://www.googletagmanager.com/gtag/js?id=G-PSMG5L90D1';
+          document.head.appendChild(ga);
+          ga.onload = function() {
+            gtag('js', new Date());
+            gtag('config', 'G-PSMG5L90D1');
+          };
+          // AdSense
+          var ad = document.createElement('script');
+          ad.async = true;
+          ad.crossOrigin = 'anonymous';
+          ad.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8704878719669732';
+          document.head.appendChild(ad);
+        });
+      }
+      if (document.readyState === 'complete') loadDeferredScripts();
+      else window.addEventListener('load', loadDeferredScripts);
     </script>
   </head>
   <body>

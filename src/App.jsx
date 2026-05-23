@@ -211,20 +211,25 @@ function SectionHeader({ title, subtitle, icon: Icon, onSeeMore }) {
 }
 
 /**
- * Optimiza URLs de imágenes: pide tamaños menores cuando no es hero.
- * Wikimedia thumb URLs y Unsplash soportan resize via query/path.
+ * Optimiza URLs de imágenes vía wsrv.nl (CDN free):
+ *   - Convierte a WebP (ahorra 30-60% vs JPG)
+ *   - Resize a la dimensión real necesaria (no descargar 1200px para mostrar 300px)
+ *   - Long cache TTL (wsrv.nl mantiene 1 año en su CDN)
+ *   - Reduce LCP y total transfer dramaticamente
+ *
+ * Las URLs propias (contextoclaro.com) y data: URIs se devuelven sin cambios.
  */
 function optimizeImageUrl(url, targetWidth = 600) {
   if (!url) return url
-  // Unsplash: ?w=NNN parameter
-  if (url.includes('images.unsplash.com')) {
-    return url.replace(/[?&]w=\d+/, `?w=${targetWidth}`).replace(/[?&]q=\d+/, '&q=70')
+  // Skip URLs propias y data:
+  if (url.startsWith('data:') || url.startsWith('/') || url.includes('contextoclaro.com/logo')) {
+    return url
   }
-  // Wikimedia: /thumb/.../1200px-FILE → /thumb/.../{N}px-FILE
-  if (url.includes('upload.wikimedia.org/wikipedia/commons/thumb/')) {
-    return url.replace(/\/\d+px-/, `/${targetWidth}px-`)
-  }
-  return url
+  // Quitar protocolo para wsrv.nl
+  const clean = url.replace(/^https?:\/\//, '')
+  // wsrv.nl proxy con WebP + resize
+  const q = targetWidth >= 1000 ? 82 : 75
+  return `https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=${targetWidth}&output=webp&q=${q}&we`
 }
 
 function NewsImage({ src, alt, className = "", news, priority = false, width = 600, height }) {
@@ -285,7 +290,7 @@ function LoadingSkeleton() {
   return (
     <div className="gradient-bg flex items-center justify-center">
       <div className="flex flex-col items-center gap-4 fade-in">
-        <img src="/logo.png" alt="Contexto Claro" width="300" height="80" className="h-14 w-auto pulse-soft" loading="eager" fetchPriority="high" />
+        <img src="/logo.png" alt="Contexto Claro" width="400" height="107" className="h-14 w-auto pulse-soft" loading="eager" fetchPriority="high" />
         <p className="text-xs text-text-muted pulse-soft">Cargando noticias...</p>
       </div>
     </div>
@@ -378,7 +383,7 @@ function Header({ onLogoClick, countryCode, onCountryChange, onSelectNews, onSea
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <button onClick={onLogoClick} aria-label="Ir al inicio — Contexto Claro" className="flex items-center group">
-            <img src="/logo.png" alt="Contexto Claro" width="300" height="80" className="h-10 sm:h-11 w-auto group-hover:brightness-110 transition-all" loading="eager" fetchPriority="high" />
+            <img src="/logo.png" alt="Contexto Claro" width="400" height="107" className="h-10 sm:h-11 w-auto group-hover:brightness-110 transition-all" loading="eager" fetchPriority="high" />
           </button>
 
           {/* Desktop Nav */}
@@ -1065,7 +1070,7 @@ function Footer({ onAboutClick }) {
 
           {/* Logo + info */}
           <div className="flex flex-col items-start lg:items-end gap-4">
-            <img src="/logo.png" alt="Contexto Claro" width="300" height="80" className="h-10 w-auto" loading="lazy" />
+            <img src="/logo.png" alt="Contexto Claro" width="400" height="107" className="h-10 w-auto" loading="lazy" />
             <p className="text-xs text-text-muted max-w-xs text-left lg:text-right leading-relaxed">
               Filtramos el ruido. Entregamos la verdad.
             </p>
@@ -1089,7 +1094,7 @@ function Footer({ onAboutClick }) {
 
         <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Contexto Claro" width="300" height="80" className="h-8 w-auto opacity-80" loading="lazy" />
+            <img src="/logo.png" alt="Contexto Claro" width="400" height="107" className="h-8 w-auto opacity-80" loading="lazy" />
             <span className="text-xs text-text-muted">&copy; {new Date().getFullYear()} Contexto Claro — contextoclaro.com</span>
           </div>
           <span className="text-xs text-text-muted">Filtramos el ruido. Entregamos la verdad.</span>

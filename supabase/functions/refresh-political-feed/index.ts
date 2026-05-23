@@ -79,6 +79,68 @@ function splitItems(xml: string, itemTag: string): string[] {
   return xml.match(re) || [];
 }
 
+// Resuelve el URL final (sigue redirects) — útil para Google News que devuelve URLs encriptadas
+async function resolveUrl(url: string): Promise<string> {
+  try {
+    const resp = await fetch(url, {
+      method: "HEAD",
+      redirect: "follow",
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; ContextoClaro/1.0)" },
+      signal: AbortSignal.timeout(3000),
+    });
+    return resp.url || url;
+  } catch {
+    return url;
+  }
+}
+
+// Fetch HTML y extraer og:image (con timeout corto)
+async function fetchOgImage(url: string): Promise<string | null> {
+  try {
+    const resp = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; ContextoClaro/1.0; +https://contextoclaro.com)",
+        "Accept": "text/html,application/xhtml+xml",
+      },
+      signal: AbortSignal.timeout(4000),
+      redirect: "follow",
+    });
+    if (!resp.ok) return null;
+    const html = (await resp.text()).slice(0, 60000); // primeros 60KB son suficientes para meta tags
+    const re = /<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]+content=["']([^"']+)["']/i;
+    const m = html.match(re);
+    if (!m) {
+      const re2 = /<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["'](?:og:image|twitter:image)["']/i;
+      const m2 = html.match(re2);
+      if (m2) return m2[1];
+      return null;
+    }
+    return m[1];
+  } catch {
+    return null;
+  }
+}
+
+// Logo via Google s2/favicons — siempre funciona como fallback
+function faviconFor(url: string): string | null {
+  try {
+    const host = new URL(url).hostname;
+    return `https://www.google.com/s2/favicons?domain=${host}&sz=128`;
+  } catch {
+    return null;
+  }
+}
+
+async function enrichImage(rawUrl: string): Promise<{ url: string; image: string | null }> {
+  // Para Google News: resolver primero el redirect
+  let finalUrl = rawUrl;
+  if (rawUrl.includes("news.google.com/rss")) {
+    finalUrl = await resolveUrl(rawUrl);
+  }
+  const og = await fetchOgImage(finalUrl);
+  return { url: finalUrl, image: og || faviconFor(finalUrl) };
+}
+
 async function fetchMastodonFeed(tag: string, country: "VE" | "CO"): Promise<FeedItem[]> {
   const url = `https://mastodon.social/tags/${encodeURIComponent(tag)}.rss`;
   try {
@@ -182,6 +244,20 @@ serve(async () => {
     seen.add(k);
     return true;
   });
+
+  // Enriquecer con imágenes (og:image o favicon como fallback)
+  // Concurrencia limitada para no exceder timeouts; saltamos los que ya tienen media de Mastodon
+  const CONCURRENCY = 6;
+  const queue = dedup.filter((i) => !i.media || i.media.length === 0);
+  for (let i = 0; i < queue.length; i += CONCURRENCY) {
+    const batch = queue.slice(i, i + CONCURRENCY);
+    const enriched = await Promise.all(batch.map((item) => enrichImage(item.url)));
+    batch.forEach((item, idx) => {
+      const { url, image } = enriched[idx];
+      item.url = url; // URL resuelto (sin redirect de Google News)
+      if (image) item.media = [{ type: "photo", url: image }];
+    });
+  }
 
   // Upsert en política_tweets (constraint compuesto manejará idempotencia)
   const rows = dedup.map((i) => ({

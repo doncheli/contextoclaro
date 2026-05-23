@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Radio, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
+import { Radio, ChevronLeft, ChevronRight, ExternalLink, Share2 } from 'lucide-react'
 import { fetchPoliticalFeed } from '../lib/newsService'
 
 function timeAgo(iso) {
@@ -20,42 +20,102 @@ function flagFor(country) {
   return '🌎'
 }
 
+function faviconFor(url) {
+  try {
+    const host = new URL(url).hostname
+    return `https://www.google.com/s2/favicons?domain=${host}&sz=128`
+  } catch {
+    return null
+  }
+}
+
+function imageOf(item) {
+  const m = Array.isArray(item.media) ? item.media[0]?.url : null
+  if (m) return { src: m, isFavicon: false }
+  const fav = faviconFor(item.url)
+  return fav ? { src: fav, isFavicon: true } : null
+}
+
+const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
+
 function FeedCard({ item }) {
+  const [copied, setCopied] = useState(false)
   const isMastodon = item.source === 'mastodon'
-  const isGnews = item.source === 'gnews'
   const display = item.title || item.text || ''
-  const cleanText = display.length > 180 ? display.slice(0, 180).trim() + '…' : display
+  const cleanText = display.length > 160 ? display.slice(0, 160).trim() + '…' : display
   const sourceLabel = item.source_name || (isMastodon ? 'Mastodon' : 'Google News')
+  const img = imageOf(item)
+
+  const onShare = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const shareData = { title: sourceLabel, text: display.slice(0, 200), url: item.url }
+    if (isMobile && navigator.share) {
+      try { await navigator.share(shareData) } catch { /* user canceled */ }
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(item.url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(display.slice(0, 200))}&url=${encodeURIComponent(item.url)}`, '_blank', 'noopener,noreferrer')
+    }
+  }
 
   return (
-    <a
-      href={item.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="snap-start shrink-0 w-[300px] md:w-[340px] card p-4 hover:border-accent/40 transition-colors group flex flex-col gap-3"
-    >
-      <div className="flex items-center gap-2">
-        <span className="text-base leading-none">{flagFor(item.country_code)}</span>
-        <span className={`text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded ${
-          isMastodon ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'
-        }`}>
-          {isMastodon ? 'Mastodon' : 'News'}
-        </span>
-        <span className="text-[10px] text-text-muted truncate flex-1">{sourceLabel}</span>
-        <ExternalLink size={12} className="text-text-muted shrink-0" />
-      </div>
-      <p className="text-sm leading-snug text-text-primary group-hover:text-accent-light transition-colors line-clamp-5 min-h-[5rem]">
-        {cleanText}
-      </p>
-      <div className="flex items-center justify-between mt-auto pt-2 border-t border-border/30">
-        <span className="text-[10px] text-text-muted">{timeAgo(item.tweet_created_at)}</span>
-        {item.author_name && (
-          <span className="text-[10px] text-text-muted truncate max-w-[140px]">
-            {item.author_name}
+    <div className="snap-start shrink-0 w-[300px] md:w-[340px] card overflow-hidden hover:border-accent/40 transition-colors group flex flex-col">
+      {img && (
+        <a href={item.url} target="_blank" rel="noopener noreferrer" className="relative block bg-surface/40 overflow-hidden" style={{ aspectRatio: img.isFavicon ? '16/9' : '16/9' }}>
+          <img
+            src={img.src}
+            alt={sourceLabel}
+            loading="lazy"
+            className={img.isFavicon
+              ? 'absolute inset-0 m-auto w-12 h-12 object-contain opacity-80'
+              : 'w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500'}
+            onError={(e) => {
+              const fav = faviconFor(item.url)
+              if (fav && e.currentTarget.src !== fav) {
+                e.currentTarget.src = fav
+                e.currentTarget.className = 'absolute inset-0 m-auto w-12 h-12 object-contain opacity-80'
+              } else {
+                e.currentTarget.style.display = 'none'
+              }
+            }}
+          />
+          <span className={`absolute top-2 left-2 text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded ${
+            isMastodon ? 'bg-purple-600/90 text-white' : 'bg-blue-600/90 text-white'
+          }`}>
+            {isMastodon ? 'Mastodon' : 'News'}
           </span>
-        )}
+        </a>
+      )}
+      <div className="p-4 flex flex-col gap-3 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="text-base leading-none">{flagFor(item.country_code)}</span>
+          <span className="text-[10px] text-text-muted truncate flex-1">{sourceLabel}</span>
+          <a href={item.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} title="Abrir fuente">
+            <ExternalLink size={12} className="text-text-muted hover:text-accent transition-colors" />
+          </a>
+        </div>
+        <p className="text-sm leading-snug text-text-primary line-clamp-4 min-h-[4rem]">
+          {cleanText}
+        </p>
+        <div className="flex items-center justify-between mt-auto pt-2 border-t border-border/30">
+          <span className="text-[10px] text-text-muted">{timeAgo(item.tweet_created_at)}</span>
+          <button
+            onClick={onShare}
+            aria-label="Compartir"
+            title={copied ? '¡Copiado!' : 'Compartir'}
+            className="flex items-center gap-1 text-[10px] text-text-muted hover:text-accent transition-colors px-1.5 py-1 -mr-1 rounded"
+          >
+            <Share2 size={12} />
+            <span>{copied ? 'Copiado' : 'Compartir'}</span>
+          </button>
+        </div>
       </div>
-    </a>
+    </div>
   )
 }
 
@@ -89,7 +149,7 @@ export default function PoliticalFeedCarousel({ countryCode = 'ALL' }) {
         </div>
         <div className="flex gap-3 overflow-hidden">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="card p-4 w-[300px] h-[180px] shrink-0 animate-pulse bg-surface/50" />
+            <div key={i} className="card w-[300px] h-[300px] shrink-0 animate-pulse bg-surface/50" />
           ))}
         </div>
       </section>

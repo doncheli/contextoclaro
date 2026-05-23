@@ -22,6 +22,50 @@ function slugify(text) {
   return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 80)
 }
 
+// Detecta firma de tweet: "\u2014 Autor (@handle) Mes D\u00eda, A\u00f1o"
+const TWEET_SIGNATURE_RE = /^[\s\u2014\u2013\-]*([^(]+?)\s+\(@([A-Za-z0-9_]+)\)\s+(.+)$/
+// pic.twitter.com/XXX y t.co/XXX
+const TWITTER_PIC_RE = /pic\.twitter\.com\/[A-Za-z0-9]+/g
+const TCO_RE = /https?:\/\/t\.co\/[A-Za-z0-9]+/g
+
+function isTweetSignature(text) {
+  if (!text) return null
+  const trimmed = text.trim()
+  if (!trimmed.startsWith('\u2014') && !trimmed.startsWith('-') && !trimmed.startsWith('\u2013')) return null
+  const m = trimmed.match(TWEET_SIGNATURE_RE)
+  if (!m) return null
+  return { author: m[1].trim(), handle: m[2], date: m[3].trim() }
+}
+
+// Renderiza un texto reemplazando URLs de Twitter por links visibles
+function renderWithTwitterLinks(text) {
+  if (!text) return text
+  // Combinar regexes preservando posici\u00f3n. Tokenizamos.
+  const tokens = []
+  let lastIdx = 0
+  const allMatches = [
+    ...[...text.matchAll(TWITTER_PIC_RE)].map((m) => ({ idx: m.index, match: m[0], type: 'pic' })),
+    ...[...text.matchAll(TCO_RE)].map((m) => ({ idx: m.index, match: m[0], type: 'tco' })),
+  ].sort((a, b) => a.idx - b.idx)
+
+  for (const hit of allMatches) {
+    if (hit.idx > lastIdx) tokens.push(text.slice(lastIdx, hit.idx))
+    const href = hit.type === 'pic' ? `https://${hit.match}` : hit.match
+    tokens.push(
+      <a key={`${hit.type}-${hit.idx}`} href={href} target="_blank" rel="noopener noreferrer"
+         className="inline-flex items-center gap-1 text-accent hover:text-accent-light underline-offset-2 hover:underline">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+        <span>{hit.type === 'pic' ? 'imagen en X' : 'link'}</span>
+      </a>
+    )
+    lastIdx = hit.idx + hit.match.length
+  }
+  if (lastIdx < text.length) tokens.push(text.slice(lastIdx))
+  return tokens.length === 0 ? text : tokens
+}
+
 const VERDICT_LABELS = { real: 'Verificada', misleading: 'Engañosa', fake: 'Falsa', unverified: 'Sin verificar' }
 const VERDICT_EMOJI = { real: '✅', misleading: '⚠️', fake: '🚫', unverified: '❓' }
 
@@ -768,6 +812,39 @@ export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) 
                     const pb = typeof prev === 'string' ? { kind: 'text' } : prev
                     return pb.kind !== 'text'
                   })
+
+                  // ¿Es una firma de tweet? "— Autor (@handle) Fecha"
+                  const sig = isTweetSignature(b.text)
+                  if (sig) {
+                    return (
+                      <div key={i} className="flex items-center gap-2 -mt-3 mb-6 pl-4 border-l-2 border-accent/40 text-text-secondary">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" className="text-text-muted shrink-0" aria-hidden="true">
+                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                        <span className="text-xs italic">
+                          <span className="font-semibold not-italic">{sig.author}</span>{' '}
+                          <a href={`https://x.com/${sig.handle}`} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline not-italic">@{sig.handle}</a>{' · '}
+                          {sig.date}
+                        </span>
+                      </div>
+                    )
+                  }
+
+                  // Tweet quote: párrafo que termina con pic.twitter.com — encerrar con barra lateral
+                  const hasTweetMedia = /pic\.twitter\.com\/|https?:\/\/t\.co\//.test(b.text)
+                  if (hasTweetMedia) {
+                    return (
+                      <div key={i}>
+                        <blockquote className="my-4 pl-4 border-l-2 border-accent/40 bg-accent/5 py-3 pr-3 rounded-r-lg">
+                          <p className="text-[15px] sm:text-base text-text-primary leading-[1.7]">
+                            {renderWithTwitterLinks(b.text)}
+                          </p>
+                        </blockquote>
+                        {showAd && <AdBanner variant="article-inline" />}
+                      </div>
+                    )
+                  }
+
                   return (
                     <div key={i}>
                       <p className={`text-[15px] sm:text-base text-text-primary leading-[1.75] mb-5 ${isFirstText ? 'first-letter:text-[3.2rem] first-letter:font-black first-letter:font-heading first-letter:text-accent first-letter:mr-2 first-letter:float-left first-letter:leading-[0.85] first-letter:mt-1' : ''}`}>

@@ -17,7 +17,6 @@ import InstagramCardsPage from './components/InstagramCards'
 import NewsletterForm from './components/NewsletterForm'
 import SocialCard from './components/SocialCard'
 import AccessibilityWidget from './components/AccessibilityWidget'
-import Onboarding from './components/Onboarding'
 import BottomNav from './components/BottomNav'
 import FactCheckDashboard from './components/FactCheckDashboard'
 import ScoreBadge from './components/ScoreBadge'
@@ -1605,7 +1604,6 @@ export default function App() {
   const [showMethodology, setShowMethodology] = useState(() => window.location.pathname === '/metodologia')
   const [showConsumption, setShowConsumption] = useState(() => window.location.pathname === '/mi-consumo')
   const [showFactCheck, setShowFactCheck] = useState(() => window.location.pathname === '/verificaciones')
-  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('cc_onboarded'))
   const handleCountryChange = (code) => { trackCountryFilter(code); setCountryCode(code) }
   const { hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, catPolitica, catEconomia, catDeportes, catTecnologia, loading, error } = useNewsSections(countryCode)
   const norm = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
@@ -1770,10 +1768,6 @@ export default function App() {
     const params = new URLSearchParams(window.location.search)
     const cardId = params.get('id') ? Number(params.get('id')) : null
     return <SocialCard newsId={cardId} />
-  }
-
-  if (showOnboarding) {
-    return <Onboarding onComplete={() => setShowOnboarding(false)} />
   }
 
   if (loading) return <LoadingSkeleton />

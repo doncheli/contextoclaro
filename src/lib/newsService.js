@@ -116,6 +116,38 @@ async function fetchBalanced(buildQuery, countryCode, limit) {
 }
 
 /**
+ * RPC consolidada: hero + daily + feed + stats en UNA sola query.
+ * Reemplaza 4-12 round-trips al backend. Crítico para mobile.
+ */
+export async function fetchHomeFeed(countryCode = 'ALL') {
+  const { data, error } = await supabase
+    .rpc('get_home_feed', {
+      p_country: countryCode || 'ALL',
+      p_hero_limit: 4,
+      p_daily_limit: 20,
+      p_feed_limit: 30,
+    })
+  if (error) throw error
+  if (!data) return null
+  return {
+    hero: (data.hero || []).map(mapNewsRow),
+    daily: (data.daily || []).map(mapNewsRow),
+    feed: (data.feed || []).map(mapNewsRow),
+    stats: data.stats ? {
+      total: Number(data.stats.total) || 0,
+      verified: Number(data.stats.verified) || 0,
+      misleading: Number(data.stats.misleading) || 0,
+      fake: Number(data.stats.fake) || 0,
+      sponsored: Number(data.stats.sponsored) || 0,
+      biasLeft: Number(data.stats.bias_left) || 0,
+      biasCenter: Number(data.stats.bias_center) || 0,
+      biasRight: Number(data.stats.bias_right) || 0,
+      aiValidated: Number(data.stats.ai_validated) || 0,
+    } : null,
+  }
+}
+
+/**
  * Obtiene las noticias hero (las 4 más recientes con imagen, 2 VE + 2 CO).
  * Sin join a news_sources — el modal carga las sources por separado.
  */

@@ -1,20 +1,17 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
-  fetchHeroNews,
-  fetchDailyNews,
   fetchBlindspotNews,
-  fetchFeedNews,
   fetchFlaggedNews,
   fetchSponsoredNews,
   fetchAllNews,
   fetchNewsByCategory,
   fetchArticleDetail,
   searchNews,
-  fetchSiteStats,
+  fetchHomeFeed,
 } from '../lib/newsService'
 
-const CACHE_TTL_MS = 5 * 60 * 1000
-const CACHE_PREFIX = 'cc_cache_v1_'
+const CACHE_TTL_MS = 10 * 60 * 1000 // 10min — más agresivo para tolerar timeouts
+const CACHE_PREFIX = 'cc_cache_v2_'
 
 function readCache(key) {
   try {
@@ -63,15 +60,14 @@ export function useNewsSections(countryCode = 'ALL') {
   const mountedRef = useRef(true)
 
   const loadCritical = useCallback(async () => {
-    const [hero, daily, feed, stats] = await Promise.all([
-      fetchHeroNews(countryCode),
-      fetchDailyNews(countryCode),
-      fetchFeedNews(countryCode),
-      fetchSiteStats(countryCode),
-    ])
-    if (!mountedRef.current) return null
+    // Una sola RPC reemplaza 4-12 round-trips. Crítico en mobile.
+    const data = await fetchHomeFeed(countryCode)
+    if (!mountedRef.current || !data) return null
+    const hero = data.hero || []
+    const daily = data.daily || []
+    const feed = data.feed || []
     const heroSlides = hero.length > 0 ? hero : daily.slice(0, 3).concat(feed.slice(0, 3)).slice(0, 3)
-    return { hero: heroSlides, daily, feed, stats }
+    return { hero: heroSlides, daily, feed, stats: data.stats }
   }, [countryCode])
 
   const loadDeferred = useCallback(async () => {
@@ -94,26 +90,58 @@ export function useNewsSections(countryCode = 'ALL') {
     mountedRef.current = true
     let intervalId = null
 
+    // Stale-while-revalidate: si hay cache, mostrarlo de inmediato y refrescar en background.
+    // Si la red falla, mantener cache visible en lugar de mostrar error.
+    const hasUsableCache = cached && (cached.hero || cached.daily?.length)
+
     ;(async () => {
       try {
-        if (!cached) setLoading(true)
+        if (!hasUsableCache) setLoading(true)
 
-        const critical = await loadCritical()
-        if (!mountedRef.current || !critical) return
-        setSections(prev => ({ ...prev, ...critical }))
-        setError(null)
-        setLoading(false)
+        // Retry con backoff exponencial — 3 intentos
+        let critical = null
+        let lastErr = null
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            critical = await loadCritical()
+            break
+          } catch (e) {
+            lastErr = e
+            if (attempt < 2) await new Promise(r => setTimeout(r, 400 * Math.pow(2, attempt)))
+          }
+        }
 
-        const deferred = await loadDeferred()
-        if (!mountedRef.current || !deferred) return
-        setSections(prev => {
-          const merged = { ...prev, ...deferred }
-          writeCache(cacheKey, merged)
-          return merged
-        })
+        if (!mountedRef.current) return
+
+        if (critical) {
+          setSections(prev => ({ ...prev, ...critical }))
+          setError(null)
+          setLoading(false)
+        } else if (hasUsableCache) {
+          // No bloqueamos: ya tenemos cache visible, fallaste en silencio
+          console.warn('[useNews] critical fetch failed, manteniendo cache', lastErr)
+          setLoading(false)
+        } else {
+          setError(lastErr?.message || 'Error al cargar noticias')
+          setLoading(false)
+          return
+        }
+
+        // Fase 2 — no bloqueante. Si falla, el sitio sigue funcionando con la fase 1.
+        try {
+          const deferred = await loadDeferred()
+          if (!mountedRef.current || !deferred) return
+          setSections(prev => {
+            const merged = { ...prev, ...deferred }
+            writeCache(cacheKey, merged)
+            return merged
+          })
+        } catch (e) {
+          console.warn('[useNews] deferred fetch falló (no crítico):', e?.message)
+        }
       } catch (err) {
         if (mountedRef.current) {
-          setError(err.message || 'Error al cargar noticias')
+          if (!hasUsableCache) setError(err.message || 'Error al cargar noticias')
           setLoading(false)
         }
       }
@@ -121,9 +149,9 @@ export function useNewsSections(countryCode = 'ALL') {
 
     intervalId = setInterval(async () => {
       try {
-        const freshStats = await fetchSiteStats(countryCode)
-        if (mountedRef.current && freshStats) {
-          setSections(prev => ({ ...prev, stats: freshStats }))
+        const fresh = await fetchHomeFeed(countryCode)
+        if (mountedRef.current && fresh?.stats) {
+          setSections(prev => ({ ...prev, stats: fresh.stats }))
         }
       } catch { /* silent */ }
     }, 5 * 60 * 1000)

@@ -11,6 +11,7 @@ import { searchNews } from './lib/newsService'
 import AdBanner from './components/AdBanner'
 import CoverageMeter from './components/CoverageMeter'
 import BlindspotLATAM from './components/BlindspotLATAM'
+import PoliticalFeedCarousel from './components/PoliticalFeedCarousel'
 import NewsletterForm from './components/NewsletterForm'
 import BottomNav from './components/BottomNav'
 import ScoreBadge from './components/ScoreBadge'
@@ -2211,6 +2212,11 @@ export default function App() {
             </div>
           </section>
         )}
+
+        {/* Pulso político en redes — Mastodon + Google News RSS */}
+        <div className="px-4 sm:px-6 lg:px-8 mt-8">
+          <PoliticalFeedCarousel countryCode={countryCode} />
+        </div>
 
         {/* Blindspot LATAM — cross-country coverage gaps */}
         <BlindspotLATAM onSelectNews={selectNews} />

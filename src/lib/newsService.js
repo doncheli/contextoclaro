@@ -392,3 +392,23 @@ export async function fetchSiteStats(countryCode) {
     aiValidated: Number(row.ai_validated) || 0,
   }
 }
+
+/**
+ * Trae los posts del feed político social (Mastodon + Google News RSS).
+ * Refresh por cron cada 30min vía edge function refresh-political-feed.
+ */
+export async function fetchPoliticalFeed(countryCode = 'ALL', limit = 30) {
+  let query = supabase
+    .from('political_tweets')
+    .select('id, source, source_name, title, text, url, author_name, country_code, tweet_created_at, media')
+    .order('tweet_created_at', { ascending: false })
+    .limit(limit)
+  if (countryCode && countryCode !== 'ALL') {
+    query = query.eq('country_code', countryCode)
+  } else {
+    query = query.in('country_code', ['VE', 'CO'])
+  }
+  const { data, error } = await query
+  if (error || !data) return []
+  return data
+}

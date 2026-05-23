@@ -15,9 +15,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-// El bearer viene URL-encoded del developer portal — lo decodificamos
-const BEARER_RAW = Deno.env.get("TWITTER_BEARER_TOKEN") || "";
-const BEARER = decodeURIComponent(BEARER_RAW);
+// Bearer token: usamos el valor crudo del env var (sin decodificar URL — el
+// token original de Twitter ya viene con caracteres especiales que parecen
+// URL-encoded pero NO lo están).
+const BEARER = (Deno.env.get("TWITTER_BEARER_TOKEN") || "").trim();
 
 const CACHE_TTL_MIN = 60; // 1h por query
 

@@ -94,16 +94,23 @@ export function useNewsSections(countryCode = 'ALL') {
     // Si la red falla, mantener cache visible en lugar de mostrar error.
     const hasUsableCache = cached && (cached.hero || cached.daily?.length)
 
+    // Wrapper con hard timeout — si la query del cliente excede N ms, abandonamos
+    // y caemos a cache. Evita que un timeout del servidor (Postgres) bloquee la UI.
+    const withTimeout = (promise, ms) => Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error(`client_timeout_${ms}ms`)), ms)),
+    ])
+
     ;(async () => {
       try {
         if (!hasUsableCache) setLoading(true)
 
-        // Retry con backoff exponencial — 3 intentos
+        // Retry con backoff exponencial — 3 intentos, cada uno con hard timeout 5s
         let critical = null
         let lastErr = null
         for (let attempt = 0; attempt < 3; attempt++) {
           try {
-            critical = await loadCritical()
+            critical = await withTimeout(loadCritical(), 5000)
             break
           } catch (e) {
             lastErr = e

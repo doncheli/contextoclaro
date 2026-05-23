@@ -298,14 +298,40 @@ function LoadingSkeleton() {
 }
 
 function ErrorState({ message }) {
+  const [retrying, setRetrying] = useState(false)
+  const [countdown, setCountdown] = useState(5)
+
+  // Auto-retry tras 5s — usuario no debe quedarse pegado en error
+  useEffect(() => {
+    if (retrying) return
+    const interval = setInterval(() => {
+      setCountdown(c => {
+        if (c <= 1) {
+          clearInterval(interval)
+          setRetrying(true)
+          window.location.reload()
+          return 0
+        }
+        return c - 1
+      })
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [retrying])
+
   return (
     <div className="gradient-bg flex items-center justify-center">
       <div className="card p-8 max-w-md text-center fade-in">
-        <AlertOctagon size={40} className="text-danger mx-auto mb-4" />
-        <h2 className="text-lg font-bold font-heading mb-2">Error al cargar</h2>
-        <p className="text-sm text-text-secondary mb-6">{message}</p>
-        <button onClick={() => window.location.reload()} className="px-5 py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent-light transition-colors">
-          Reintentar
+        <AlertOctagon size={40} className="text-warning mx-auto mb-4" />
+        <h2 className="text-lg font-bold font-heading mb-2">Reconectando…</h2>
+        <p className="text-sm text-text-secondary mb-4">
+          Estamos sincronizando con el servidor. Esto debería tomar segundos.
+        </p>
+        <p className="text-xs text-text-muted mb-6">Reintento automático en {countdown}s</p>
+        <button
+          onClick={() => { setRetrying(true); window.location.reload() }}
+          className="px-5 py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent-light transition-colors"
+        >
+          Reintentar ahora
         </button>
       </div>
     </div>

@@ -229,18 +229,30 @@ function optimizeImageUrl(url, targetWidth = 600) {
 
 function NewsImage({ src, alt, className = "", news, priority = false, width = 600, height }) {
   const [failed, setFailed] = useState(false)
-  const fallback = news ? getFallbackImage(news) : null
   const targetW = priority ? 1200 : 600
-  const optimized = (!src || failed) ? optimizeImageUrl(fallback, targetW) : optimizeImageUrl(src, targetW)
+  // Solo usa src real; nada de Unsplash genérico (ya nulled en DB)
+  const optimized = (src && !failed) ? optimizeImageUrl(src, targetW) : null
 
   if (!optimized) {
+    // Placeholder elegante estilo NYT: tipografía de la categoría + país + acento
+    const category = news?.category?.split(' · ')[1] || news?.category || ''
+    const country = news?.country || (news?.countryCode === 'VE' ? '🇻🇪' : news?.countryCode === 'CO' ? '🇨🇴' : '🌐')
+    const verdict = news?.geminiVerdict
+    const accent = verdict === 'fake' ? 'border-danger/30 from-danger/10' :
+                   verdict === 'misleading' ? 'border-warning/30 from-warning/10' :
+                   'border-accent/20 from-accent/5'
     return (
       <div
-        className={`news-placeholder flex flex-col items-center justify-center gap-2 ${className}`}
+        className={`flex flex-col items-center justify-center gap-2 bg-gradient-to-br ${accent} via-card to-card border-y ${className}`}
         style={{ aspectRatio: '16/9' }}
+        aria-label={alt || 'Noticia sin imagen'}
       >
-        <Newspaper size={36} className="text-accent/30" aria-hidden="true" />
-        <span className="text-[10px] text-text-muted/50 font-medium tracking-wide uppercase">Sin imagen</span>
+        <span className="text-3xl opacity-50" aria-hidden="true">{country}</span>
+        {category && (
+          <span className="text-[10px] font-black tracking-[0.2em] uppercase text-text-muted/70 px-3 text-center">
+            {category}
+          </span>
+        )}
       </div>
     )
   }

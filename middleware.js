@@ -1,3 +1,5 @@
+import { next } from '@vercel/edge'
+
 const SUPABASE_URL = 'https://sbtqtzqpoejeojfnajpu.supabase.co'
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNidHF0enFwb2VqZW9qZm5hanB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNjExNTUsImV4cCI6MjA4ODkzNzE1NX0.VBCGM9Ov3rLUyAFlDpzRRj4t9MWMTlXuilGuN6LLjDw'
 
@@ -30,20 +32,35 @@ function slugify(text) {
 export default async function middleware(req) {
   const ua = (req.headers.get('user-agent') || '').toLowerCase()
   const isBot = BOT_AGENTS.some(bot => ua.includes(bot))
-
-  if (!isBot) return
-
   const url = new URL(req.url)
   const path = url.pathname
 
-  if (path === '/') {
-    return await renderHome(url)
+  if (isBot) {
+    if (path === '/') return await renderHome(url)
+    const idMatch = path.match(/-(\d+)$/)
+    if (!idMatch) return
+    return await renderArticle(url, idMatch[1])
   }
 
-  const idMatch = path.match(/-(\d+)$/)
-  if (!idMatch) return
-
-  return await renderArticle(url, idMatch[1])
+  // Para HUMANOS: añade Link header con preload del hero image (LCP boost).
+  // Usa next() de @vercel/edge para pass-through con headers extra.
+  if (path === '/') {
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/news?select=image&country_code=in.(VE,CO,TECH)&image=not.is.null&order=published_at.desc&limit=1`,
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
+      )
+      const data = await res.json()
+      const heroImage = data?.[0]?.image
+      if (heroImage) {
+        return next({
+          headers: {
+            'Link': `<${heroImage}>; rel=preload; as=image; fetchpriority=high`,
+          },
+        })
+      }
+    } catch { /* fallthrough — el SPA carga normal */ }
+  }
 }
 
 async function renderHome(url) {

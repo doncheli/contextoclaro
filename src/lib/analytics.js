@@ -143,25 +143,39 @@ export function resetScrollTracking() {
 export function observeScrollDepth(articleId, containerEl) {
   if (!containerEl) return () => {}
 
+  // Throttle con rAF para evitar lecturas síncronas en cada evento de scroll
+  // (causaba forced reflow ≈ 125ms en Lighthouse).
+  let rafId = null
   const handler = () => {
-    const { scrollTop, scrollHeight, clientHeight } = containerEl === document.documentElement
-      ? { scrollTop: window.scrollY, scrollHeight: document.documentElement.scrollHeight, clientHeight: window.innerHeight }
-      : containerEl
+    if (rafId) return
+    rafId = requestAnimationFrame(() => {
+      rafId = null
+      // Lectura batch en rAF — el navegador no fuerza reflow
+      const isDoc = containerEl === document.documentElement
+      const scrollTop = isDoc ? window.scrollY : containerEl.scrollTop
+      const scrollHeight = isDoc ? document.documentElement.scrollHeight : containerEl.scrollHeight
+      const clientHeight = isDoc ? window.innerHeight : containerEl.clientHeight
 
-    const percent = Math.round((scrollTop / (scrollHeight - clientHeight)) * 100)
-    const thresholds = [25, 50, 75, 100]
+      const denom = scrollHeight - clientHeight
+      if (denom <= 0) return
+      const percent = Math.round((scrollTop / denom) * 100)
+      const thresholds = [25, 50, 75, 100]
 
-    for (const t of thresholds) {
-      if (percent >= t && !firedDepths.has(`${articleId}-${t}`)) {
-        firedDepths.add(`${articleId}-${t}`)
-        trackArticleScrollDepth(articleId, t)
+      for (const t of thresholds) {
+        if (percent >= t && !firedDepths.has(`${articleId}-${t}`)) {
+          firedDepths.add(`${articleId}-${t}`)
+          trackArticleScrollDepth(articleId, t)
+        }
       }
-    }
+    })
   }
 
   const target = containerEl === document.documentElement ? window : containerEl
   target.addEventListener('scroll', handler, { passive: true })
-  return () => target.removeEventListener('scroll', handler)
+  return () => {
+    if (rafId) cancelAnimationFrame(rafId)
+    target.removeEventListener('scroll', handler)
+  }
 }
 
 // ═══════════════════════════════════════════

@@ -11,7 +11,7 @@ import CoverageMeter from './components/CoverageMeter'
 import { trackRead } from './lib/consumptionTracker'
 import NewsPoll from './components/NewsPoll'
 import NewsTriptych from './components/NewsTriptych'
-import { Comments } from '@hyvor/hyvor-talk-react'
+import Giscus from '@giscus/react'
 import {
   trackArticleView, trackArticleTimeSpent, trackVerificationView,
   trackSourcesClick, trackReturnToFeed, observeScrollDepth, resetScrollTracking, trackShareClick
@@ -741,20 +741,26 @@ export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) 
         {/* News Triptych — perspective comparison */}
         <NewsTriptych sources={detail.sources} />
 
-        {/* Comments — Hyvor Talk */}
-        {import.meta.env.VITE_HYVOR_WEBSITE_ID && (
-          <section className="mt-8">
-            <h2 className="text-lg font-bold font-heading mb-4">Comentarios</h2>
-            <Comments
-              website-id={Number(import.meta.env.VITE_HYVOR_WEBSITE_ID)}
-              page-id={`news-${newsId}`}
-              page-title={news.title}
-              page-language="es"
-              colors="dark"
-              loading="lazy"
-            />
-          </section>
-        )}
+        {/* Comments — Giscus (GitHub Discussions) */}
+        <section className="mt-8">
+          <h2 className="text-lg font-bold font-heading mb-4">Comentarios</h2>
+          <Giscus
+            id={`giscus-news-${newsId}`}
+            repo="doncheli/contextoclaro"
+            repoId="R_kgDORp72Xw"
+            category="Announcements"
+            categoryId="DIC_kwDORp72X84C9pU7"
+            mapping="specific"
+            term={`news-${newsId}`}
+            strict="0"
+            reactionsEnabled="1"
+            emitMetadata="0"
+            inputPosition="top"
+            theme={document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark_dimmed'}
+            lang="es"
+            loading="lazy"
+          />
+        </section>
 
         {/* Regional Context */}
         <RegionalContext

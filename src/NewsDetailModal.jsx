@@ -689,20 +689,94 @@ export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) 
               </div>
             </div>
 
-            {/* Article body */}
+            {/* Article body — tipografía editorial estilo CNN/The Objective */}
             <article className="article-body mb-8" role="article" aria-label={news.title}>
               {detail.body.length > 0 ? (
-                detail.body.map((para, i) => (
-                  <div key={i}>
-                    <p className="text-sm sm:text-base text-text-primary/90 leading-relaxed mb-5">
-                      {para}
-                    </p>
-                    {/* Ad every 4 paragraphs, only if article is long enough */}
-                    {(i + 1) % 4 === 0 && i < detail.body.length - 1 && detail.body.length >= 6 && (
-                      <AdBanner variant="article-inline" />
-                    )}
-                  </div>
-                ))
+                detail.body.map((block, i) => {
+                  // Backwards compatibility: si el body viene como strings (cache viejo)
+                  const b = typeof block === 'string' ? { kind: 'text', text: block } : block
+                  const showAd = (i + 1) % 5 === 0 && i < detail.body.length - 1 && detail.body.length >= 8 && b.kind === 'text'
+
+                  if (b.kind === 'heading') {
+                    return (
+                      <h2 key={i} className="font-heading text-base sm:text-lg font-black uppercase tracking-[0.18em] text-accent mt-8 mb-3 pb-2 border-b-2 border-accent/30 first:mt-0">
+                        {b.text}
+                      </h2>
+                    )
+                  }
+
+                  if (b.kind === 'image') {
+                    return (
+                      <figure key={i} className="my-6 -mx-2 sm:mx-0">
+                        <img
+                          src={b.url}
+                          alt={b.alt || b.caption || ''}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-auto rounded-xl border border-border shadow-sm"
+                        />
+                        {b.caption && (
+                          <figcaption className="text-[11px] sm:text-xs text-text-muted italic mt-2 px-1 leading-snug">
+                            {b.caption}
+                          </figcaption>
+                        )}
+                      </figure>
+                    )
+                  }
+
+                  if (b.kind === 'youtube') {
+                    const m = b.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{6,15})/)
+                    const id = m?.[1]
+                    if (!id) return null
+                    return (
+                      <figure key={i} className="my-6 -mx-2 sm:mx-0">
+                        <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-border shadow-sm bg-surface">
+                          <iframe
+                            src={`https://www.youtube-nocookie.com/embed/${id}`}
+                            title={b.caption || 'Video relacionado'}
+                            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            loading="lazy"
+                            className="absolute inset-0 w-full h-full"
+                          />
+                        </div>
+                        {b.caption && (
+                          <figcaption className="text-[11px] sm:text-xs text-text-muted italic mt-2 px-1 leading-snug flex items-start gap-1.5">
+                            <Newspaper size={11} className="mt-0.5 shrink-0" aria-hidden="true" />
+                            <span>{b.caption}</span>
+                          </figcaption>
+                        )}
+                      </figure>
+                    )
+                  }
+
+                  if (b.kind === 'video') {
+                    return (
+                      <figure key={i} className="my-6 -mx-2 sm:mx-0">
+                        <video controls preload="metadata" className="w-full rounded-xl border border-border" poster={b.alt || undefined}>
+                          <source src={b.url} />
+                        </video>
+                        {b.caption && (
+                          <figcaption className="text-[11px] sm:text-xs text-text-muted italic mt-2 px-1 leading-snug">{b.caption}</figcaption>
+                        )}
+                      </figure>
+                    )
+                  }
+
+                  // text
+                  const isFirstText = detail.body.slice(0, i).every(prev => {
+                    const pb = typeof prev === 'string' ? { kind: 'text' } : prev
+                    return pb.kind !== 'text'
+                  })
+                  return (
+                    <div key={i}>
+                      <p className={`text-[15px] sm:text-base text-text-primary leading-[1.75] mb-5 ${isFirstText ? 'first-letter:text-[3.2rem] first-letter:font-black first-letter:font-heading first-letter:text-accent first-letter:mr-2 first-letter:float-left first-letter:leading-[0.85] first-letter:mt-1' : ''}`}>
+                        {b.text}
+                      </p>
+                      {showAd && <AdBanner variant="article-inline" />}
+                    </div>
+                  )
+                })
               ) : (
                 <div className="card p-6 text-center">
                   <Newspaper size={32} className="text-accent/40 mx-auto mb-3" aria-hidden="true" />

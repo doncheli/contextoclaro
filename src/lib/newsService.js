@@ -259,22 +259,50 @@ export async function fetchArticleDetail(newsId) {
   if (paragraphsResult.error) throw paragraphsResult.error
 
   const row = newsResult.data
-  // Clean and split paragraphs properly
-  const cleanBody = paragraphsResult.data
-    .map(p => stripHtml(p.content))
-    .filter(text => text && text.length > 20 && !text.startsWith('http'))
-    .flatMap(text => {
-      // Split long concatenated blocks into proper paragraphs
-      // Detect sentences that end with period+capital letter without space
-      const fixed = text
+  // Construye el body como bloques heterogeneos para soportar tipografia
+  // editorial estilo CNN / The Objective: heading, paragraph, image, video.
+  //   { kind: 'heading', text }
+  //   { kind: 'text',    text }
+  //   { kind: 'image' | 'youtube' | 'video', url, caption, alt }
+  const cleanBody = (paragraphsResult.data || []).flatMap(p => {
+    const blocks = []
+    const rawText = stripHtml(p.content || '').trim()
+    const hasMedia = !!(p.media_url && p.media_type)
+
+    if (rawText && rawText.length > 5 && !rawText.startsWith('http')) {
+      const fixed = rawText
         .replace(/&nbsp;/g, ' ')
         .replace(/\u00a0/g, ' ')
-        .replace(/\.([A-ZÁÉÍÓÚÑ¿¡])/g, '.\n$1')
-        .replace(/\?([A-ZÁÉÍÓÚÑ¿¡])/g, '?\n$1')
-        .replace(/!([A-ZÁÉÍÓÚÑ¿¡])/g, '!\n$1')
         .replace(/\s{2,}/g, ' ')
-      return fixed.split('\n').map(s => s.trim()).filter(s => s.length > 15)
-    })
+
+      // Detect editorial section headers: "EL CONTEXTO — texto..." → heading + text
+      const headingMatch = fixed.match(/^([A-ZÁÉÍÓÚÑ ]{3,40})\s*[—–-]\s*(.+)$/)
+      if (headingMatch) {
+        blocks.push({ kind: 'heading', text: headingMatch[1].trim() })
+        blocks.push({ kind: 'text', text: headingMatch[2].trim() })
+      } else if (hasMedia) {
+        blocks.push({ kind: 'text', text: fixed })
+      } else {
+        const sentences = fixed
+          .replace(/\.([A-ZÁÉÍÓÚÑ¿¡])/g, '.\n$1')
+          .replace(/\?([A-ZÁÉÍÓÚÑ¿¡])/g, '?\n$1')
+          .replace(/!([A-ZÁÉÍÓÚÑ¿¡])/g, '!\n$1')
+          .split('\n').map(s => s.trim()).filter(s => s.length > 15)
+        sentences.forEach(t => blocks.push({ kind: 'text', text: t }))
+      }
+    }
+
+    if (hasMedia) {
+      blocks.push({
+        kind: p.media_type,
+        url: p.media_url,
+        caption: p.media_caption || null,
+        alt: p.media_alt || null,
+      })
+    }
+
+    return blocks
+  })
   return {
     news: mapNewsRow(row),
     body: cleanBody,

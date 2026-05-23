@@ -117,11 +117,12 @@ async function fetchBalanced(buildQuery, countryCode, limit) {
 
 /**
  * Obtiene las noticias hero (las 4 más recientes con imagen, 2 VE + 2 CO).
+ * Sin join a news_sources — el modal carga las sources por separado.
  */
 export async function fetchHeroNews(countryCode) {
   const buildQuery = (lim) => supabase
     .from('news')
-    .select('*, news_sources(*)')
+    .select('*')
     .not('image', 'is', null)
     .not('image', 'like', '%googleusercontent%')
     .order('published_at', { ascending: false })
@@ -207,23 +208,24 @@ export async function fetchFlaggedNews(countryCode) {
 }
 
 /**
- * Obtiene TODAS las noticias (para el detalle).
+ * Obtiene noticias generales (uso en regional context).
+ * Sin join — bajamos limit y eliminamos join pesado.
  */
 export async function fetchAllNews(countryCode) {
   const buildQuery = (lim) => supabase
     .from('news')
-    .select('*, news_sources(*)')
+    .select('id, title, description, category, country, country_code, image, source_label, source_count, bias_left, bias_center, bias_right, bias_label, gemini_verdict, gemini_confidence, score_factual, score_source_div, score_transparency, score_independence, veracity, sponsored_flag, published_at')
     .order('published_at', { ascending: false })
     .limit(lim)
 
-  const data = await fetchBalanced(buildQuery, countryCode, 200)
+  const data = await fetchBalanced(buildQuery, countryCode, 100)
   return data.map(mapNewsRow)
 }
 
 export async function fetchNewsByCategory(pattern, countryCode, limit = 12) {
   const buildQuery = (lim) => supabase
     .from('news')
-    .select('*, news_sources(*)')
+    .select('id, title, description, category, country, country_code, image, source_label, source_count, bias_left, bias_center, bias_right, bias_label, gemini_verdict, gemini_confidence, score_factual, score_source_div, score_transparency, score_independence, veracity, sponsored_flag, published_at')
     .ilike('category', `%${pattern}%`)
     .order('published_at', { ascending: false })
     .limit(lim)
@@ -308,23 +310,25 @@ export async function searchNews(query, maxResults = 20) {
 
 /**
  * Estadísticas en tiempo real del sitio.
+ * Usa RPC get_site_stats — una sola query con COUNT FILTER en Postgres.
+ * Antes cargaba toda la tabla y contaba en JS (causaba statement_timeout).
  */
 export async function fetchSiteStats(countryCode) {
-  let query = supabase.from('news').select('gemini_verdict, bias_label, sponsored_flag, gemini_validated', { count: 'exact', head: false })
-  query = applyCountryFilter(query, countryCode)
-  const { data, error } = await query
-  if (error) return null
+  const { data, error } = await supabase
+    .rpc('get_site_stats', { country_filter: countryCode || 'ALL' })
 
-  const rows = data || []
+  if (error || !data || data.length === 0) return null
+
+  const row = data[0]
   return {
-    total: rows.length,
-    verified: rows.filter(r => r.gemini_verdict === 'real').length,
-    misleading: rows.filter(r => r.gemini_verdict === 'misleading').length,
-    fake: rows.filter(r => r.gemini_verdict === 'fake').length,
-    sponsored: rows.filter(r => r.sponsored_flag).length,
-    biasLeft: rows.filter(r => r.bias_label === 'IZQUIERDA').length,
-    biasCenter: rows.filter(r => r.bias_label === 'CENTRO' || r.bias_label === 'EQUILIBRADO').length,
-    biasRight: rows.filter(r => r.bias_label === 'DERECHA').length,
-    aiValidated: rows.filter(r => r.gemini_validated).length,
+    total: Number(row.total) || 0,
+    verified: Number(row.verified) || 0,
+    misleading: Number(row.misleading) || 0,
+    fake: Number(row.fake) || 0,
+    sponsored: Number(row.sponsored) || 0,
+    biasLeft: Number(row.bias_left) || 0,
+    biasCenter: Number(row.bias_center) || 0,
+    biasRight: Number(row.bias_right) || 0,
+    aiValidated: Number(row.ai_validated) || 0,
   }
 }

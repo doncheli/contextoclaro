@@ -92,6 +92,7 @@ async function main() {
       if (slugs.length === 0) continue
       found++
 
+      let allFailed = true
       for (const slug of slugs) {
         let resolved = seenSlugs.get(slug)
         if (resolved === undefined) {
@@ -103,28 +104,51 @@ async function main() {
           const m = await fetchMedia(r.id)
           resolved = m && m.media.length > 0 ? m : null
           seenSlugs.set(slug, resolved)
-          // Throttle: 250ms entre fetches a Twitter
           await new Promise(r => setTimeout(r, 250))
         }
         if (!resolved) { failed++; continue }
+        allFailed = false
 
-        // Insertar un párrafo media justo después del párrafo actual
-        for (let mi = 0; mi < resolved.media.length; mi++) {
-          const m = resolved.media[mi]
-          const { error: insErr } = await supabase.from('article_paragraphs').insert({
-            news_id: p.news_id,
-            sort_order: p.sort_order + 0.001 * (mi + 1),
-            content: '',
-            media_type: m.type,
-            media_url: m.url,
-            media_caption: resolved.user ? `Tweet de @${resolved.user}` : null,
-            media_alt: null,
-          })
-          if (!insErr) updated++
-          else if (!String(insErr.message || '').includes('duplicate')) {
-            console.warn('  ↳ insert error:', insErr.message?.slice(0, 100))
+        // Update el párrafo actual con media (smallint sort_order no permite decimales)
+        // Si ya hubiera media en otro párrafo lo dejamos; si no, asignamos al actual.
+        // Para múltiples media en un solo tweet, ponemos los extras como párrafos
+        // nuevos con sort_order = max + n.
+        const firstMedia = resolved.media[0]
+        const { error: upErr } = await supabase.from('article_paragraphs').update({
+          media_type: firstMedia.type,
+          media_url: firstMedia.url,
+          media_caption: resolved.user ? `Tweet de @${resolved.user}` : null,
+        }).eq('id', p.id)
+        if (upErr) {
+          console.warn('  ↳ update error:', upErr.message?.slice(0, 100))
+        } else {
+          updated++
+        }
+        // Resto de media: append al final
+        if (resolved.media.length > 1) {
+          const { data: maxRow } = await supabase.from('article_paragraphs')
+            .select('sort_order').eq('news_id', p.news_id)
+            .order('sort_order', { ascending: false }).limit(1).single()
+          let nextSort = (maxRow?.sort_order || p.sort_order) + 1
+          for (let mi = 1; mi < resolved.media.length; mi++) {
+            const m = resolved.media[mi]
+            await supabase.from('article_paragraphs').insert({
+              news_id: p.news_id,
+              sort_order: nextSort++,
+              content: '',
+              media_type: m.type,
+              media_url: m.url,
+              media_caption: resolved.user ? `Tweet de @${resolved.user}` : null,
+              media_alt: null,
+            })
           }
         }
+      }
+
+      if (allFailed && slugs.length > 0) {
+        await supabase.from('article_paragraphs')
+          .update({ media_caption: 'TWEET_DELETED' })
+          .eq('id', p.id)
       }
 
       if (found % 10 === 0) {

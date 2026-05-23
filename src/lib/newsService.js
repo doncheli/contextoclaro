@@ -300,6 +300,7 @@ export async function fetchArticleDetail(newsId) {
     const blocks = []
     const rawText = stripHtml(p.content || '').trim()
     const hasMedia = !!(p.media_url && p.media_type)
+    const isDeletedTweet = p.media_caption === 'TWEET_DELETED'
 
     if (rawText && rawText.length > 5 && !rawText.startsWith('http')) {
       let fixed = rawText
@@ -308,11 +309,11 @@ export async function fetchArticleDetail(newsId) {
         .replace(/\s{2,}/g, ' ')
 
       // Si este p\u00e1rrafo ya tiene media resuelto (vino del script de
-      // backfill twitter), quitar el "pic.twitter.com/..." del texto
-      // para no duplicar el embed visual.
-      if (hasMedia) {
+      // backfill twitter) O el tweet fue borrado, quitar pic.twitter.com
+      // del texto para no duplicar embed ni mostrar CTA in\u00fatil.
+      if (hasMedia || isDeletedTweet) {
         fixed = fixed.replace(/\s*pic\.twitter\.com\/[A-Za-z0-9]+/g, '').trim()
-        if (fixed.length < 5) fixed = '' // si qued\u00f3 solo el slug
+        if (fixed.length < 5) fixed = ''
       }
 
       // Detect editorial section headers: "EL CONTEXTO — texto..." → heading + text

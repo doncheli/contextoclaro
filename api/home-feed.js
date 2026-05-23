@@ -55,9 +55,12 @@ export default async function handler(req) {
     return new Response(JSON.stringify(data), {
       headers: {
         'Content-Type': 'application/json',
-        // Edge CDN cache 60s, browser cache 30s, stale-while-revalidate 5min
-        'Cache-Control': 'public, s-maxage=60, max-age=30, stale-while-revalidate=300',
-        // Vary por country para no servir cache cruzado
+        // Browser cache 30s
+        'Cache-Control': 'public, max-age=30, must-revalidate',
+        // Vercel Edge Network cache (separado de browser) — 5 min con SWR 30 min
+        'Vercel-CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=1800',
+        // CDN downstream (Cloudflare cuando esté activo) — 3 min
+        'CDN-Cache-Control': 'public, s-maxage=180',
         'Vary': 'Accept-Encoding',
       },
     })

@@ -211,24 +211,26 @@ function InvestigatorByline({ author }) {
   const inv = INVESTIGATORS[author]
   if (!inv) return null
   return (
-    <div className="flex items-center gap-3 my-5 p-3 rounded-xl border border-accent/20 bg-accent/5">
+    <div className="flex items-center gap-3 my-5 p-4 rounded-xl border border-accent/30 bg-accent/10">
       <img
         src={inv.avatarUrl}
         alt={inv.displayName}
         loading="lazy"
         decoding="async"
-        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-accent/40 shrink-0 object-cover"
+        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-accent shrink-0 object-cover"
       />
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-accent">{inv.label}</span>
-          <span className="text-text-muted text-xs">·</span>
-          <span className="text-sm sm:text-base font-bold text-text-primary truncate">{inv.displayName}</span>
+        <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent mb-0.5">
+          {inv.label}
         </div>
-        <div className="flex items-center gap-2 mt-1.5 text-text-secondary">
+        <div className="text-base sm:text-lg font-black text-text-primary leading-tight">
+          {inv.displayName}
+        </div>
+        <div className="flex items-center gap-3 mt-2 text-text-secondary">
           {inv.socials.map(s => (
             <a key={s.name} href={s.url} target="_blank" rel="noopener noreferrer"
                title={`${s.name} ${s.handle}`}
+               aria-label={`${s.name} ${s.handle}`}
                className="hover:text-accent transition-colors">
               {s.icon}
             </a>
@@ -906,8 +908,8 @@ export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) 
               </div>
             </div>
 
-            {/* Byline del investigador — solo si news.author es un handle conocido */}
-            <InvestigatorByline author={news.author} />
+            {/* Byline del investigador — author viene del detail (DB fresca), con fallback al feed */}
+            <InvestigatorByline author={detail?.news?.author || news.author} />
 
             {/* Article body — tipografía editorial estilo CNN/The Objective */}
             <article className="article-body mb-8" role="article" aria-label={news.title}>

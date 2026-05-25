@@ -168,6 +168,25 @@ function renderWithTwitterLinks(text) {
   return tokens.length === 0 ? text : tokens
 }
 
+const URL_RE = /(https?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)\]])/g
+function linkifyText(text) {
+  if (!text || typeof text !== 'string') return text
+  const parts = []
+  let lastIdx = 0
+  for (const m of text.matchAll(URL_RE)) {
+    if (m.index > lastIdx) parts.push(text.slice(lastIdx, m.index))
+    parts.push(
+      <a key={`url-${m.index}`} href={m[0]} target="_blank" rel="noopener noreferrer"
+         className="text-accent hover:text-accent-light underline underline-offset-2 break-all">
+        {m[0]}
+      </a>
+    )
+    lastIdx = m.index + m[0].length
+  }
+  if (lastIdx < text.length) parts.push(text.slice(lastIdx))
+  return parts.length === 0 ? text : parts
+}
+
 const VERDICT_LABELS = { real: 'Verificada', misleading: 'Engañosa', fake: 'Falsa', unverified: 'Sin verificar' }
 const VERDICT_EMOJI = { real: '✅', misleading: '⚠️', fake: '🚫', unverified: '❓' }
 
@@ -843,6 +862,56 @@ export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) 
                   const b = typeof block === 'string' ? { kind: 'text', text: block } : block
                   const showAd = (i + 1) % 5 === 0 && i < detail.body.length - 1 && detail.body.length >= 8 && b.kind === 'text'
 
+                  // AVATAR: imagen con caption "AVATAR ..." seguida de un implicado.
+                  // Layouts soportados:
+                  //   [AVATAR, text]               → avatar + texto
+                  //   [AVATAR, heading, text]      → heading arriba, avatar + texto debajo (caso "NOMBRE — bio" que el parser parte)
+                  const isAvatar = b.kind === 'image' && /^AVATAR\b/i.test(b.caption || '')
+                  const normalize = (block) => typeof block === 'string' ? { kind: 'text', text: block } : block
+                  if (isAvatar) {
+                    const n1 = normalize(detail.body[i + 1])
+                    const n2 = normalize(detail.body[i + 2])
+                    let headingText = null
+                    let bodyText = null
+                    if (n1?.kind === 'heading' && n2?.kind === 'text') {
+                      headingText = n1.text
+                      bodyText = n2.text
+                    } else if (n1?.kind === 'text') {
+                      bodyText = n1.text
+                    }
+                    if (bodyText) {
+                      return (
+                        <div key={i} className="my-5">
+                          {headingText && (
+                            <h3 className="font-heading text-sm sm:text-base font-bold uppercase tracking-[0.12em] text-text-primary mb-2">
+                              {headingText}
+                            </h3>
+                          )}
+                          <div className="flex items-start gap-4">
+                            <img
+                              src={b.url}
+                              alt={b.caption || ''}
+                              loading="lazy"
+                              decoding="async"
+                              className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-accent/40 shrink-0 object-cover"
+                            />
+                            <p className="text-[15px] sm:text-base text-text-primary leading-[1.7] flex-1">
+                              {linkifyText(bodyText)}
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    }
+                  }
+                  // Si el bloque anterior (o anteanterior) fue un AVATAR consumido, no renderizar este bloque
+                  const prev1 = normalize(detail.body[i - 1])
+                  const prev2 = normalize(detail.body[i - 2])
+                  const prev2IsAvatar = prev2?.kind === 'image' && /^AVATAR\b/i.test(prev2.caption || '')
+                  const prev1IsAvatar = prev1?.kind === 'image' && /^AVATAR\b/i.test(prev1.caption || '')
+                  if (prev1IsAvatar && b.kind === 'text') return null
+                  if (prev2IsAvatar && prev1?.kind === 'heading' && b.kind === 'text') return null
+                  if (prev1IsAvatar && b.kind === 'heading') return null
+
                   if (b.kind === 'heading') {
                     return (
                       <h2 key={i} className="font-heading text-base sm:text-lg font-black uppercase tracking-[0.18em] text-accent mt-8 mb-3 pb-2 border-b-2 border-accent/30 first:mt-0">
@@ -958,7 +1027,7 @@ export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) 
                   return (
                     <div key={i}>
                       <p className={`text-[15px] sm:text-base text-text-primary leading-[1.75] mb-5 ${isFirstText ? 'first-letter:text-[3.2rem] first-letter:font-black first-letter:font-heading first-letter:text-accent first-letter:mr-2 first-letter:float-left first-letter:leading-[0.85] first-letter:mt-1' : ''}`}>
-                        {b.text}
+                        {linkifyText(b.text)}
                       </p>
                       {showAd && <AdBanner variant="article-inline" />}
                     </div>

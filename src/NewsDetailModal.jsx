@@ -893,7 +893,7 @@ export default function ArticleView({ newsId, allNews, onClose, onSelectNews }) 
                               alt={b.caption || ''}
                               loading="lazy"
                               decoding="async"
-                              className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-accent/40 shrink-0 object-cover"
+                              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-accent/40 shrink-0 object-cover"
                             />
                             <p className="text-[15px] sm:text-base text-text-primary leading-[1.7] flex-1">
                               {linkifyText(bodyText)}

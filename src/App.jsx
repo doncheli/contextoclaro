@@ -2211,7 +2211,7 @@ export default function App() {
           </section>
         )}
 
-        {/* Periodismo de Investigación — ANTES de Tecnología */}
+        {/* Don Cheli Investiga — ANTES de Tecnología */}
         <section className="px-4 sm:px-6 lg:px-8 mt-12">
           <div className="rounded-2xl border border-danger/25 bg-gradient-to-br from-danger/[0.06] via-card to-card p-5 sm:p-7">
             <div className="flex items-start gap-3 mb-5">
@@ -2222,12 +2222,13 @@ export default function App() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-danger">Investigación</span>
                   <span className="text-[10px] text-text-muted">·</span>
-                  <span className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">Reportajes de fondo</span>
+                  <span className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">Casos · Trazabilidad · Cero ruido</span>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-extrabold font-heading mt-0.5">Periodismo de Investigación</h2>
+                <h2 className="text-xl sm:text-2xl font-extrabold font-heading mt-0.5">Don Cheli Investiga</h2>
                 <p className="text-xs sm:text-sm text-text-secondary mt-1.5 leading-relaxed max-w-2xl">
-                  Reportajes exhaustivos sobre corrupción, malversación y redes clientelares en Colombia y Venezuela.
-                  Rigor probatorio absoluto. Cero alucinaciones. Solo lo que se puede documentar.
+                  Tramas de corrupción, malversación y redes clientelares en Colombia y Venezuela
+                  documentadas con evidencia primaria: sumarios, informes UCO/UDEF, declaraciones judiciales.
+                  Rigor probatorio absoluto. Cero alucinaciones.
                 </p>
               </div>
               {investigacion.length > 0 && (
@@ -2244,7 +2245,7 @@ export default function App() {
               <div className="text-center py-10 px-4">
                 <p className="text-sm text-text-secondary font-medium">Próximamente</p>
                 <p className="text-xs text-text-muted mt-2 max-w-md mx-auto">
-                  Estamos preparando los primeros reportajes de investigación. Cada caso pasa por verificación documental
+                  Don Cheli está documentando los próximos casos. Cada uno pasa por verificación documental
                   exhaustiva antes de publicarse.
                 </p>
               </div>

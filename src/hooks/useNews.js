@@ -84,7 +84,7 @@ export function useNewsSections(countryCode = 'ALL') {
       fetchNewsByCategory('conomí', countryCode),
       fetchNewsByCategory('eporte', countryCode),
       fetchNewsByCategory('ecnolog', countryCode),
-      fetchNewsByCategory('investigaci', countryCode, 8),
+      fetchNewsByCategory('investigaci', countryCode, 50),
     ])
     if (!mountedRef.current) return null
     return { blindspot, flagged, sponsored, allNews, catPolitica, catEconomia, catDeportes, catTecnologia, catInvestigacion }

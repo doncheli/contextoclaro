@@ -2056,8 +2056,15 @@ export default function App() {
   }
 
   if (showAllNews) {
-    const sorted = [...allNews].sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0))
-    const filtered = categoryFilter === 'ALL' ? sorted : sorted.filter(n => norm(n.category || '').includes(norm(categoryFilter)))
+    // Para INVESTIGACIÓN usamos catInvestigacion (consulta dedicada hasta 50) en vez de allNews
+    // — allNews está balanceado VE/CO a 100 y suele dejar fuera las investigaciones más antiguas.
+    const source = categoryFilter === 'INVESTIGACIÓN' && (catInvestigacion?.length || 0) > 0
+      ? catInvestigacion
+      : allNews
+    const sorted = [...source].sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0))
+    const filtered = categoryFilter === 'ALL' || categoryFilter === 'INVESTIGACIÓN'
+      ? sorted
+      : sorted.filter(n => norm(n.category || '').includes(norm(categoryFilter)))
     const visible = filtered.slice(0, visibleCount)
     return (
       <div className="gradient-bg" lang="es">

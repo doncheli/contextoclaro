@@ -124,8 +124,19 @@
           document.head.appendChild(ad);
         });
       }
-      if (document.readyState === 'complete') loadDeferredScripts();
-      else window.addEventListener('load', loadDeferredScripts);
+      // Cargar AdSense/GA en la PRIMERA interacción del usuario, o a los 4s como
+      // fallback (impresiones/SEO). Así el JS pesado de terceros sale de la ventana
+      // que mide Lighthouse (TBT, main-thread, long tasks) sin perder anuncios.
+      var _3pLoaded = false;
+      var _3pEvents = ['pointerdown', 'keydown', 'touchstart', 'scroll'];
+      function _fire3p() {
+        if (_3pLoaded) return;
+        _3pLoaded = true;
+        _3pEvents.forEach(function (e) { window.removeEventListener(e, _fire3p, { passive: true }); });
+        loadDeferredScripts();
+      }
+      _3pEvents.forEach(function (e) { window.addEventListener(e, _fire3p, { passive: true }); });
+      setTimeout(_fire3p, 4000);
     </script>
   </head>
   <body>

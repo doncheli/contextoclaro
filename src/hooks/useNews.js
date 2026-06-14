@@ -8,6 +8,7 @@ import {
   fetchArticleDetail,
   searchNews,
   fetchHomeFeed,
+  fetchNewsPage,
 } from '../lib/newsService'
 
 // localStorage cache: muestra el contenido viejo de inmediato (UX) pero
@@ -74,12 +75,23 @@ export function useNewsSections(countryCode = 'ALL') {
     return { hero: heroSlides, daily, feed, stats: data.stats }
   }, [countryCode])
 
+  // Núcleo diferido: lo que alimenta las secciones superiores (tendencias, breaking).
+  // Solo 4 queries → menor pico de concurrencia en la BD que las 9 de antes.
   const loadDeferred = useCallback(async () => {
-    const [blindspot, flagged, sponsored, allNews, catPolitica, catEconomia, catDeportes, catTecnologia, catInvestigacion] = await Promise.all([
+    const [blindspot, flagged, sponsored, allNews] = await Promise.all([
       fetchBlindspotNews(countryCode),
       fetchFlaggedNews(countryCode),
       fetchSponsoredNews(countryCode),
       fetchAllNews(countryCode),
+    ])
+    if (!mountedRef.current) return null
+    return { blindspot, flagged, sponsored, allNews }
+  }, [countryCode])
+
+  // Categorías: las 5 consultas ILIKE más caras. Se difieren a idle para no competir
+  // con la carga crítica ni con el núcleo. Son secciones below-the-fold.
+  const loadCategories = useCallback(async () => {
+    const [catPolitica, catEconomia, catDeportes, catTecnologia, catInvestigacion] = await Promise.all([
       fetchNewsByCategory('olític', countryCode),
       fetchNewsByCategory('conomí', countryCode),
       fetchNewsByCategory('eporte', countryCode),
@@ -87,7 +99,7 @@ export function useNewsSections(countryCode = 'ALL') {
       fetchNewsByCategory('investigaci', countryCode, 50),
     ])
     if (!mountedRef.current) return null
-    return { blindspot, flagged, sponsored, allNews, catPolitica, catEconomia, catDeportes, catTecnologia, catInvestigacion }
+    return { catPolitica, catEconomia, catDeportes, catTecnologia, catInvestigacion }
   }, [countryCode])
 
   useEffect(() => {
@@ -138,7 +150,7 @@ export function useNewsSections(countryCode = 'ALL') {
           return
         }
 
-        // Fase 2 — no bloqueante. Si falla, el sitio sigue funcionando con la fase 1.
+        // Fase 2 — núcleo diferido (no bloqueante).
         try {
           const deferred = await loadDeferred()
           if (!mountedRef.current || !deferred) return
@@ -149,6 +161,26 @@ export function useNewsSections(countryCode = 'ALL') {
           })
         } catch (e) {
           console.warn('[useNews] deferred fetch falló (no crítico):', e?.message)
+        }
+
+        // Fase 3 — categorías (5 ILIKE caros) en idle, fuera del burst inicial.
+        const runCategories = async () => {
+          try {
+            const cats = await loadCategories()
+            if (!mountedRef.current || !cats) return
+            setSections(prev => {
+              const merged = { ...prev, ...cats }
+              writeCache(cacheKey, merged)
+              return merged
+            })
+          } catch (e) {
+            console.warn('[useNews] categorías fetch falló (no crítico):', e?.message)
+          }
+        }
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+          window.requestIdleCallback(runCategories, { timeout: 3000 })
+        } else {
+          setTimeout(runCategories, 800)
         }
       } catch (err) {
         if (mountedRef.current) {
@@ -168,7 +200,7 @@ export function useNewsSections(countryCode = 'ALL') {
     }, 5 * 60 * 1000)
 
     return () => { mountedRef.current = false; if (intervalId) clearInterval(intervalId) }
-  }, [countryCode, cacheKey, loadCritical, loadDeferred])
+  }, [countryCode, cacheKey, loadCritical, loadDeferred, loadCategories])
 
   return { ...sections, loading, error }
 }
@@ -211,6 +243,51 @@ export function useArticleDetail(newsId) {
   }, [load])
 
   return { data, loading, error }
+}
+
+/**
+ * Paginación bajo demanda para la vista "Todas las Noticias".
+ * Carga la primera página al activarse y trae las siguientes al pulsar "Cargar más".
+ * Ordena por fecha de carga (published_at) y no carga nada de forma eager mientras
+ * el usuario esté en la home — evita traer miles de filas de golpe.
+ */
+export function usePaginatedNews(countryCode = 'ALL', active = false, pageSize = 48) {
+  const [items, setItems] = useState([])
+  const [hasMore, setHasMore] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const mountedRef = useRef(true)
+  const loadingRef = useRef(false)
+
+  // Reset cuando cambia el país.
+  useEffect(() => { setItems([]); setHasMore(true) }, [countryCode])
+
+  const loadMore = useCallback(async () => {
+    if (loadingRef.current || !hasMore) return
+    loadingRef.current = true
+    setLoadingMore(true)
+    try {
+      const offset = items.length
+      const rows = await fetchNewsPage(countryCode, offset, pageSize)
+      if (!mountedRef.current) return
+      setItems(prev => [...prev, ...rows])
+      setHasMore(rows.length === pageSize)
+    } catch { /* mantener lo cargado */ } finally {
+      loadingRef.current = false
+      if (mountedRef.current) setLoadingMore(false)
+    }
+  }, [countryCode, items.length, pageSize, hasMore])
+
+  // Auto-carga de la primera página al activar la vista.
+  useEffect(() => {
+    if (active && items.length === 0 && hasMore && !loadingRef.current) loadMore()
+  }, [active, items.length, hasMore, loadMore])
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
+
+  return { items, hasMore, loadingMore, loadMore }
 }
 
 /**

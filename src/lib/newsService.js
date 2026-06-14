@@ -269,6 +269,26 @@ export async function fetchAllNews(countryCode) {
   return data.map(mapNewsRow)
 }
 
+/**
+ * Paginación real por fecha de carga (published_at). Trae una página de noticias
+ * ordenadas de más reciente a más antigua, usando .range() (offset/limit).
+ * Respaldado por idx_news_country_published (country_code, published_at DESC).
+ * Se usa en la vista "Todas las Noticias": carga bajo demanda al pulsar "Cargar más".
+ */
+const PAGE_COLUMNS = 'id, title, description, category, country, country_code, image, source_label, source_count, bias_left, bias_center, bias_right, bias_label, gemini_verdict, gemini_confidence, score_factual, score_source_div, score_transparency, score_independence, veracity, sponsored_flag, published_at'
+
+export async function fetchNewsPage(countryCode = 'ALL', offset = 0, limit = 48) {
+  let query = supabase
+    .from('news')
+    .select(PAGE_COLUMNS)
+    .order('published_at', { ascending: false })
+    .range(offset, offset + limit - 1)
+  query = applyCountryFilter(query, countryCode)
+  const { data, error } = await query
+  if (error) throw error
+  return (data || []).map(mapNewsRow)
+}
+
 export async function fetchNewsByCategory(pattern, countryCode, limit = 12) {
   const buildQuery = (lim) => supabase
     .from('news')

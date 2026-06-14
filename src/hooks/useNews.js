@@ -8,6 +8,7 @@ import {
   fetchArticleDetail,
   searchNews,
   fetchHomeFeed,
+  fetchNewsPage,
 } from '../lib/newsService'
 
 // localStorage cache: muestra el contenido viejo de inmediato (UX) pero
@@ -211,6 +212,51 @@ export function useArticleDetail(newsId) {
   }, [load])
 
   return { data, loading, error }
+}
+
+/**
+ * Paginación bajo demanda para la vista "Todas las Noticias".
+ * Carga la primera página al activarse y trae las siguientes al pulsar "Cargar más".
+ * Ordena por fecha de carga (published_at) y no carga nada de forma eager mientras
+ * el usuario esté en la home — evita traer miles de filas de golpe.
+ */
+export function usePaginatedNews(countryCode = 'ALL', active = false, pageSize = 48) {
+  const [items, setItems] = useState([])
+  const [hasMore, setHasMore] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const mountedRef = useRef(true)
+  const loadingRef = useRef(false)
+
+  // Reset cuando cambia el país.
+  useEffect(() => { setItems([]); setHasMore(true) }, [countryCode])
+
+  const loadMore = useCallback(async () => {
+    if (loadingRef.current || !hasMore) return
+    loadingRef.current = true
+    setLoadingMore(true)
+    try {
+      const offset = items.length
+      const rows = await fetchNewsPage(countryCode, offset, pageSize)
+      if (!mountedRef.current) return
+      setItems(prev => [...prev, ...rows])
+      setHasMore(rows.length === pageSize)
+    } catch { /* mantener lo cargado */ } finally {
+      loadingRef.current = false
+      if (mountedRef.current) setLoadingMore(false)
+    }
+  }, [countryCode, items.length, pageSize, hasMore])
+
+  // Auto-carga de la primera página al activar la vista.
+  useEffect(() => {
+    if (active && items.length === 0 && hasMore && !loadingRef.current) loadMore()
+  }, [active, items.length, hasMore, loadMore])
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
+
+  return { items, hasMore, loadingMore, loadMore }
 }
 
 /**

@@ -6,7 +6,7 @@ import {
   Menu, X, TrendingUp, BarChart3, Compass, Newspaper, AlertTriangle, DollarSign, Megaphone,
   Share2, Clock, ExternalLink, Copy, MessageCircle, Flame
 } from 'lucide-react'
-import { useNewsSections, useNewsSearch } from './hooks/useNews'
+import { useNewsSections, useNewsSearch, usePaginatedNews } from './hooks/useNews'
 import { searchNews } from './lib/newsService'
 import AdBanner from './components/AdBanner'
 import CoverageMeter from './components/CoverageMeter'
@@ -1807,6 +1807,8 @@ export default function App() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const handleCountryChange = (code) => { trackCountryFilter(code); setCountryCode(code) }
   const { hero, daily, blindspot, feed, flagged, sponsored, allNews, stats, catPolitica, catEconomia, catDeportes, catTecnologia, catInvestigacion, loading, error } = useNewsSections(countryCode)
+  // Paginaci\u00f3n bajo demanda de "Todas las Noticias" (por fecha de carga, p\u00e1ginas de 60).
+  const pagedNews = usePaginatedNews(countryCode, showAllNews, 60)
   const norm = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
 
   const scrollPosRef = useRef(0)
@@ -1971,9 +1973,27 @@ export default function App() {
     return <Suspense fallback={<LazyFallback />}><SocialCard newsId={cardId} /></Suspense>
   }
 
-  if (loading) return <LoadingSkeleton />
-  if (error) return <ErrorState message={error} />
-  if (!hero) return <ErrorState message="No se encontraron noticias" />
+  // Sin datos aún (primer load sin cache): renderizamos el chrome real del sitio
+  // (header, navegación, footer) con un skeleton liviano, en vez de una pantalla
+  // completa con "Cargando noticias...". Así el crawler de AdSense y el usuario
+  // siempre ven contenido navegable y el sitio nunca parece caído.
+  // Solo mostramos error duro si falló de verdad y no hay nada que mostrar.
+  if (!hero) {
+    if (error && !loading) return <ErrorState message={error} />
+    return (
+      <div className="gradient-bg" lang="es">
+        <Header onLogoClick={() => window.location.reload()} {...headerProps} />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" aria-busy="true" aria-label="Cargando noticias">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="rounded-xl border border-border bg-surface h-64 pulse-soft" />
+            ))}
+          </div>
+        </main>
+        <Footer onAboutClick={openAbout} />
+      </div>
+    )
+  }
 
   if (selectedNewsId) {
     return (
@@ -2056,16 +2076,16 @@ export default function App() {
   }
 
   if (showAllNews) {
-    // Para INVESTIGACIÓN usamos catInvestigacion (consulta dedicada hasta 50) en vez de allNews
-    // — allNews está balanceado VE/CO a 100 y suele dejar fuera las investigaciones más antiguas.
-    const source = categoryFilter === 'INVESTIGACIÓN' && (catInvestigacion?.length || 0) > 0
-      ? catInvestigacion
-      : allNews
-    const sorted = [...source].sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0))
+    // INVESTIGACIÓN usa su consulta dedicada (catInvestigacion). El resto se pagina
+    // bajo demanda desde la BD por fecha de carga (usePaginatedNews) — nada de cargar
+    // miles de filas de golpe; "Cargar más" trae la siguiente página de 48.
+    const isInvestigacion = categoryFilter === 'INVESTIGACIÓN' && (catInvestigacion?.length || 0) > 0
+    const source = isInvestigacion ? catInvestigacion : pagedNews.items
     const filtered = categoryFilter === 'ALL' || categoryFilter === 'INVESTIGACIÓN'
-      ? sorted
-      : sorted.filter(n => norm(n.category || '').includes(norm(categoryFilter)))
-    const visible = filtered.slice(0, visibleCount)
+      ? source
+      : source.filter(n => norm(n.category || '').includes(norm(categoryFilter)))
+    const visible = filtered
+    const canLoadMore = !isInvestigacion && pagedNews.hasMore
     return (
       <div className="gradient-bg" lang="es">
         <Header onLogoClick={() => { setShowAllNews(false); setVisibleCount(24) }} {...headerProps} />
@@ -2077,7 +2097,7 @@ export default function App() {
               </button>
               <div>
                 <h1 className="text-xl font-bold font-heading">Todas las Noticias</h1>
-                <p className="text-xs text-text-muted">{filtered.length} noticias · Ordenadas por fecha</p>
+                <p className="text-xs text-text-muted">{filtered.length} noticias cargadas · Ordenadas por fecha{canLoadMore ? ' · hay más' : ''}</p>
               </div>
             </div>
           </div>
@@ -2095,15 +2115,21 @@ export default function App() {
               <NewsCard key={news.id} news={news} onSelectNews={selectNews} variant="compact" />
             ))}
           </div>
-          {visibleCount < filtered.length && (
+          {canLoadMore && (
             <div className="flex justify-center mt-8">
               <button
-                onClick={() => setVisibleCount(prev => prev + 24)}
-                className="px-8 py-3 rounded-xl bg-accent text-white font-semibold hover:bg-accent/90 transition-colors"
+                onClick={() => pagedNews.loadMore()}
+                disabled={pagedNews.loadingMore}
+                className="px-8 py-3 rounded-xl bg-accent text-white font-semibold hover:bg-accent/90 transition-colors disabled:opacity-60"
               >
-                Cargar más noticias ({filtered.length - visibleCount} restantes)
+                {pagedNews.loadingMore ? 'Cargando…' : 'Cargar más noticias'}
               </button>
             </div>
+          )}
+          {visible.length === 0 && (
+            <p className="text-center text-sm text-text-muted py-16">
+              {pagedNews.loadingMore ? 'Cargando noticias…' : 'No hay noticias en esta categoría.'}
+            </p>
           )}
         </main>
         <Footer onAboutClick={openAbout} />

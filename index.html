@@ -140,7 +140,37 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- App-shell estático: pinta de inmediato (mejora FCP) y da contenido al
+         crawler de AdSense/Google sin ejecutar JS. React lo reemplaza al montar. -->
+    <div id="root">
+      <div id="cc-shell" style="min-height:100vh;background:#f7f7f5;color:#1b2733;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+        <header style="display:flex;align-items:center;justify-content:space-between;gap:16px;max-width:1280px;margin:0 auto;padding:18px 24px;border-bottom:1px solid #e6e6e0">
+          <img src="/logo.png" alt="Contexto Claro" width="200" height="54" style="height:40px;width:auto" fetchpriority="high" />
+          <nav aria-label="Principal" style="display:flex;gap:18px;font-size:14px;font-weight:600">
+            <a href="/" style="color:#1b4f72;text-decoration:none">Inicio</a>
+            <a href="/verificaciones" style="color:#1b2733;text-decoration:none">Verificaciones</a>
+            <a href="/metodologia" style="color:#1b2733;text-decoration:none">Metodología</a>
+            <a href="/acerca-de" style="color:#1b2733;text-decoration:none">Acerca de</a>
+          </nav>
+        </header>
+        <main style="max-width:1280px;margin:0 auto;padding:28px 24px">
+          <p style="font-weight:700;font-size:15px;margin:0 0 10px">
+            <span style="color:#1b4f72">Filtramos el ruido.</span> <span style="color:#2e6da4">Entregamos la verdad.</span>
+          </p>
+          <h1 style="font-size:28px;line-height:1.2;font-weight:800;margin:0 0 10px">Contexto Claro — Noticias de Venezuela, Colombia y tecnología verificadas por IA</h1>
+          <p style="max-width:760px;color:#566573;font-size:15px;margin:0 0 28px">
+            Cobertura verificada de múltiples fuentes con detección de fake news, sesgo político y contenido patrocinado. Periodismo de investigación de Don Cheli sobre corrupción y poder en Venezuela.
+          </p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px" aria-hidden="true">
+            <div style="height:240px;border:1px solid #e6e6e0;border-radius:12px;background:#fff"></div>
+            <div style="height:240px;border:1px solid #e6e6e0;border-radius:12px;background:#fff"></div>
+            <div style="height:240px;border:1px solid #e6e6e0;border-radius:12px;background:#fff"></div>
+            <div style="height:240px;border:1px solid #e6e6e0;border-radius:12px;background:#fff"></div>
+          </div>
+          <p style="color:#8a949e;font-size:13px;margin-top:24px">Cargando las noticias más recientes…</p>
+        </main>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

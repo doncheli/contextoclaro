@@ -75,12 +75,23 @@ export function useNewsSections(countryCode = 'ALL') {
     return { hero: heroSlides, daily, feed, stats: data.stats }
   }, [countryCode])
 
+  // Núcleo diferido: lo que alimenta las secciones superiores (tendencias, breaking).
+  // Solo 4 queries → menor pico de concurrencia en la BD que las 9 de antes.
   const loadDeferred = useCallback(async () => {
-    const [blindspot, flagged, sponsored, allNews, catPolitica, catEconomia, catDeportes, catTecnologia, catInvestigacion] = await Promise.all([
+    const [blindspot, flagged, sponsored, allNews] = await Promise.all([
       fetchBlindspotNews(countryCode),
       fetchFlaggedNews(countryCode),
       fetchSponsoredNews(countryCode),
       fetchAllNews(countryCode),
+    ])
+    if (!mountedRef.current) return null
+    return { blindspot, flagged, sponsored, allNews }
+  }, [countryCode])
+
+  // Categorías: las 5 consultas ILIKE más caras. Se difieren a idle para no competir
+  // con la carga crítica ni con el núcleo. Son secciones below-the-fold.
+  const loadCategories = useCallback(async () => {
+    const [catPolitica, catEconomia, catDeportes, catTecnologia, catInvestigacion] = await Promise.all([
       fetchNewsByCategory('olític', countryCode),
       fetchNewsByCategory('conomí', countryCode),
       fetchNewsByCategory('eporte', countryCode),
@@ -88,7 +99,7 @@ export function useNewsSections(countryCode = 'ALL') {
       fetchNewsByCategory('investigaci', countryCode, 50),
     ])
     if (!mountedRef.current) return null
-    return { blindspot, flagged, sponsored, allNews, catPolitica, catEconomia, catDeportes, catTecnologia, catInvestigacion }
+    return { catPolitica, catEconomia, catDeportes, catTecnologia, catInvestigacion }
   }, [countryCode])
 
   useEffect(() => {
@@ -139,7 +150,7 @@ export function useNewsSections(countryCode = 'ALL') {
           return
         }
 
-        // Fase 2 — no bloqueante. Si falla, el sitio sigue funcionando con la fase 1.
+        // Fase 2 — núcleo diferido (no bloqueante).
         try {
           const deferred = await loadDeferred()
           if (!mountedRef.current || !deferred) return
@@ -150,6 +161,26 @@ export function useNewsSections(countryCode = 'ALL') {
           })
         } catch (e) {
           console.warn('[useNews] deferred fetch falló (no crítico):', e?.message)
+        }
+
+        // Fase 3 — categorías (5 ILIKE caros) en idle, fuera del burst inicial.
+        const runCategories = async () => {
+          try {
+            const cats = await loadCategories()
+            if (!mountedRef.current || !cats) return
+            setSections(prev => {
+              const merged = { ...prev, ...cats }
+              writeCache(cacheKey, merged)
+              return merged
+            })
+          } catch (e) {
+            console.warn('[useNews] categorías fetch falló (no crítico):', e?.message)
+          }
+        }
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+          window.requestIdleCallback(runCategories, { timeout: 3000 })
+        } else {
+          setTimeout(runCategories, 800)
         }
       } catch (err) {
         if (mountedRef.current) {
@@ -169,7 +200,7 @@ export function useNewsSections(countryCode = 'ALL') {
     }, 5 * 60 * 1000)
 
     return () => { mountedRef.current = false; if (intervalId) clearInterval(intervalId) }
-  }, [countryCode, cacheKey, loadCritical, loadDeferred])
+  }, [countryCode, cacheKey, loadCritical, loadDeferred, loadCategories])
 
   return { ...sections, loading, error }
 }
